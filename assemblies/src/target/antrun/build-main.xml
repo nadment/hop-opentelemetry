@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="maven-antrun-" default="main">
+  <target name="main">
+    <echo message="Installed the plugin in HOP installation in C:\hop." />
+    <delete dir="C:\hop/plugins/misc/opentelemetry" />
+    <mkdir dir="C:\hop/plugins/misc/opentelemetry" />
+    <unzip src="C:\eclipse\workspace\hop-opentelemetry\assemblies\src\target/hop-opentelemetry-assemblies-2.8.0-SNAPSHOT.zip" dest="C:\hop/plugins/" />
+  </target>
+</project>

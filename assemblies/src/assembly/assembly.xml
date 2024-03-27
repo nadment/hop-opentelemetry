@@ -1,0 +1,68 @@
+<!-- ~ Licensed to the Apache Software Foundation (ASF) under one or more 
+	~ contributor license agreements. See the NOTICE file distributed with ~ 
+	this work for additional information regarding copyright ownership. ~ The 
+	ASF licenses this file to You under the Apache License, Version 2.0 ~ (the 
+	"License"); you may not use this file except in compliance with ~ the License. 
+	You may obtain a copy of the License at ~ ~ http://www.apache.org/licenses/LICENSE-2.0 
+	~ ~ Unless required by applicable law or agreed to in writing, software ~ 
+	distributed under the License is distributed on an "AS IS" BASIS, ~ WITHOUT 
+	WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. ~ See the 
+	License for the specific language governing permissions and ~ limitations 
+	under the License. ~ -->
+
+<assembly
+	xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.3"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.3 http://maven.apache.org/xsd/assembly-1.1.3.xsd">
+	<id>hop-opentelemetry-assemblies</id>
+	<formats>
+		<format>zip</format>
+	</formats>
+	<baseDirectory>misc/opentelemetry</baseDirectory>
+	<files>
+		<file>
+			<source>${project.basedir}/src/main/resources/version.xml</source>
+			<outputDirectory>.</outputDirectory>
+			<filtered>true</filtered>
+		</file>
+
+	</files>
+	<fileSets>
+		<fileSet>
+			<outputDirectory>lib</outputDirectory>
+			<excludes>
+				<exclude>**/*</exclude>
+			</excludes>
+		</fileSet>
+	</fileSets>
+	<dependencySets>
+		<dependencySet>
+			<useProjectArtifact>false</useProjectArtifact>
+			<includes>
+				<include>org.apache.hop:hop-opentelemetry-plugins:jar</include>
+			</includes>
+		</dependencySet>
+		<dependencySet>
+			<useProjectArtifact>false</useProjectArtifact>
+			<outputDirectory>lib</outputDirectory>			
+			<includes>
+					<include>io.opentelemetry.instrumentation:opentelemetry-instrumentation-api.jar</include>
+					<include>io.opentelemetry:opentelemetry-api:jar</include>
+					<include>io.opentelemetry:opentelemetry-api-events:jar</include>
+					<include>io.opentelemetry:opentelemetry-context:jar</include>			
+				  <include>io.opentelemetry:opentelemetry-exporter-common:jar</include>
+				  <include>io.opentelemetry:opentelemetry-exporter-logging:jar</include>
+				  <include>io.opentelemetry:opentelemetry-exporter-otlp:jar</include>
+				  <include>io.opentelemetry:opentelemetry-exporter-otlp-common:jar</include>
+				  <include>io.opentelemetry:opentelemetry-exporter-sender-okhttp:jar</include>
+				  <include>io.opentelemetry:opentelemetry-extension-incubator:jar</include>		
+				  <include>io.opentelemetry:opentelemetry-sdk:jar</include>
+				  <include>io.opentelemetry:opentelemetry-sdk-common:jar</include>							  
+				  <include>io.opentelemetry:opentelemetry-sdk-trace:jar</include>
+				  <include>io.opentelemetry:opentelemetry-sdk-metrics:jar</include>
+				  <include>io.opentelemetry:opentelemetry-sdk-logs:jar</include>		
+				  <include>io.opentelemetry.semconv:opentelemetry-semconv:jar</include>								  
+			</includes>
+		</dependencySet>
+	</dependencySets>
+</assembly>
