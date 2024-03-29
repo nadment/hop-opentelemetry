@@ -56,11 +56,11 @@ public class OpenTelemetryExtensionPoint implements IExtensionPoint<PluginRegist
       PluginRegistry pluginRegistry) throws HopException {
     try {
       
-     // Thread.sleep(5000);
+    //  Thread.sleep(5000);
       
       OpenTelemetryConfig config = OpenTelemetryPlugin.loadConfig();
       
-      log.logBasic("OpenTelemetry initialization to endpoint: "+config.getEndpoint());
+      log.logBasic("OpenTelemetry initialization service '"+config.getServiceName()+"' to endpoint: "+config.getEndpoint());
 
       // Initialize OpenTelemetry
       //
@@ -85,8 +85,8 @@ public class OpenTelemetryExtensionPoint implements IExtensionPoint<PluginRegist
     return SdkMeterProvider.builder().setResource(getResource(config))
     .registerMetricReader(PeriodicMetricReader.builder(OtlpGrpcMetricExporter.builder()
         .setEndpoint(config.getEndpoint())
-        .addHeader("signoz-access-token", "e30d0eb1-c24a-4986-9183-a8bcbba6345a")
-        .setTimeout(5, TimeUnit.SECONDS).build())        
+        .setHeaders(() -> config.getHeaders())
+        .setTimeout(config.getTimeout(), TimeUnit.SECONDS).build())        
         .build())     
     .build();
   }
@@ -94,31 +94,31 @@ public class OpenTelemetryExtensionPoint implements IExtensionPoint<PluginRegist
   /** 
    * Initialize tracer provider
    */
-  public SdkTracerProvider createTracerProvider(OpenTelemetryConfig config) {
+  public SdkTracerProvider createTracerProvider(OpenTelemetryConfig config) {   
     return SdkTracerProvider.builder().setResource(getResource(config))
-    .addSpanProcessor(BatchSpanProcessor.builder(OtlpGrpcSpanExporter.builder()
-        .setEndpoint(config.getEndpoint())
-        .addHeader("signoz-access-token", "e30d0eb1-c24a-4986-9183-a8bcbba6345a")
-        .setTimeout(5, TimeUnit.SECONDS).build())
+        .addSpanProcessor(BatchSpanProcessor.builder(OtlpGrpcSpanExporter.builder()
+        .setEndpoint(config.getEndpoint())        
+        .setHeaders(() -> config.getHeaders())
+        .setTimeout(config.getTimeout(), TimeUnit.SECONDS).build())
         .setScheduleDelay(100, TimeUnit.MILLISECONDS)
         .build())
     .setSampler(Sampler.alwaysOn()).build();
   }
-  
   
   /** 
    * Initialize logger provider
    */
   public SdkLoggerProvider createLoggerProvider(OpenTelemetryConfig config) {
     return SdkLoggerProvider.builder().setResource(getResource(config))
-    .addLogRecordProcessor(
-        BatchLogRecordProcessor.builder(
-                    OtlpGrpcLogRecordExporter.builder()
-                    .setEndpoint(config.getEndpoint()).build())
-        .build())
-    .build();
+        .addLogRecordProcessor(BatchLogRecordProcessor.builder(
+            OtlpGrpcLogRecordExporter.builder()
+              .setEndpoint(config.getEndpoint())
+              .setHeaders(() -> config.getHeaders())
+              .setTimeout(config.getTimeout(), TimeUnit.SECONDS)
+              .build())
+            .build())
+        .build();
   }
-  
   
   /**
    * Build common resource attributes for all spans and metrics

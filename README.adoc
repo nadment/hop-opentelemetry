@@ -31,9 +31,10 @@ https://hop.apache.org[Apache Hop] 2.7 or above.
 ### Manual Install
 
 1. Unzip the plugin archive into the hop\plugins\ directory
-2. Configure OpenTelemetry manually by setting the system variables below or using the GUI.
-		OTEL_SERVICE_NAME: Set the default service name.
-		OTEL_EXPORTER_OTLP_ENDPOINT: Set target URL of the OpenTelemetry Collector to which send spans, metrics.
+2. Configure OpenTelemetry manually by setting the system variables below or using the GUI perspective configuration tab.
+		- OTEL_SERVICE_NAME: Specify logical service name.
+		- OTEL_EXPORTER_OTLP_ENDPOINT: Specify target URL of the OpenTelemetry Collector to which send data.
+		- OTEL_EXPORTER_OTLP_HEADERS: Key-value pairs to be used as headers associated with requests. The format is a list of key-value pairs separated by the "=" character  (i.e.: key1=value1,key2=value2)
 3. Restart Hop
 
 ### Support

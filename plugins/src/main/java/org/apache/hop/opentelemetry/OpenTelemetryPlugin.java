@@ -17,6 +17,7 @@
  */
 package org.apache.hop.opentelemetry;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hop.core.Const;
 import org.apache.hop.core.config.HopConfig;
 import org.apache.hop.core.variables.Variable;
@@ -73,17 +74,24 @@ public class OpenTelemetryPlugin {
 
     // By default use system properties
     String serviceName = System.getProperty(OTEL_SERVICE_NAME);
-    if ( serviceName==null ) {
+    if (  StringUtils.isEmpty(serviceName) ) {
       serviceName = HopConfig.readOptionString(OTEL_SERVICE_NAME, "Apache Hop");
     }
     config.setServiceName(serviceName);
     
     String endpoint = System.getProperty(OTEL_EXPORTER_OTLP_ENDPOINT);
-    if ( endpoint==null ) {
+    if (  StringUtils.isEmpty(endpoint) ) {
       endpoint = HopConfig.readOptionString(OTEL_EXPORTER_OTLP_ENDPOINT, "");
     }
     config.setEndpoint(endpoint);
 
+    String headers = System.getProperty(OTEL_EXPORTER_OTLP_HEADERS);
+    if ( StringUtils.isEmpty(headers) ) {
+      headers = HopConfig.readOptionString(OTEL_EXPORTER_OTLP_HEADERS, "");
+    }
+    //System.out.println(OTEL_EXPORTER_OTLP_HEADERS+"="+headers);
+    config.setHeadersAsString(headers);
+    
    // config.setTimeout(HopConfig.readOptionInteger(OTEL_EXPORTER_OTLP_TIMEOUT, 10));  
         
     return config;
@@ -93,12 +101,9 @@ public class OpenTelemetryPlugin {
    *  Save configuration to the HopConfig store 
    */
   public static void saveConfig(OpenTelemetryConfig config) {
-    System.setProperty(OTEL_SERVICE_NAME, config.getServiceName());
-    System.setProperty(OTEL_EXPORTER_OTLP_ENDPOINT, config.getEndpoint());
-    //System.setProperty(OTEL_EXPORTER_OTLP_TIMEOUT, config.getEndpoint());
-
     HopConfig.getInstance().saveOption(OTEL_SERVICE_NAME, config.getServiceName());
     HopConfig.getInstance().saveOption(OTEL_EXPORTER_OTLP_ENDPOINT, config.getEndpoint());
-    //HopConfig.getInstance().saveOption(OTEL_EXPORTER_OTLP_TIMEOUT, config.getEndpoint());    
+    HopConfig.getInstance().saveOption(OTEL_EXPORTER_OTLP_HEADERS, config.getHeadersAsSrtring());
+    //HopConfig.getInstance().saveOption(OTEL_EXPORTER_OTLP_TIMEOUT, String.valueOf(config.getTimeout()));    
   }  
 }
