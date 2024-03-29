@@ -18,9 +18,11 @@ under the License.
 
 ## Overview
 
-This plugin exports telemetry data for analysis, currently sending traces to monitor the execution of workflows/actions/pipelines.
+This plugin exports distributed telemetry data for analysis, currently sending traces to monitor the execution of workflows/actions/pipelines.
 
-It uses OpenTelemetry, an open source observability framework for generating, processing and transmitting telemetry data in a single, unified format. 
+It uses https://opentelemetry.io[OpenTelemetry], an open source observability framework for generating, processing and transmitting telemetry data in a single, unified format. 
+
+OpenTelemetry Metrics and Logging are not yet supported.
 
 ## How to install
 

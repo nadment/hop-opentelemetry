@@ -30,6 +30,7 @@ import org.apache.hop.workflow.WorkflowMeta;
 import org.apache.hop.workflow.action.ActionMeta;
 import org.apache.hop.workflow.action.IAction;
 import org.apache.hop.workflow.engine.IWorkflowEngine;
+import org.apache.hop.workflow.engine.WorkflowEnginePlugin;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
@@ -49,9 +50,11 @@ public class TraceWorkflowExecutionExtensionPoint
 
   public static final String INSTRUMENTATION_SCOPE = "org.apache.hop.opentelemetry";
 
-  public static final String WORKFLOW_SPAN = "workflow.span";
-  public static final String ACTION_SPAN = "action.span";
+  public static final String CURRENT_WORKFLOW_SPAN = "workflow.span";
+  public static final String CURRENT_ACTION_SPAN = "action.span";
 
+  private static final AttributeKey<String> COMPONENT_KEY = stringKey("component");
+  private static final AttributeKey<String> WORKFLOW_ENGINE_KEY = stringKey("workflow.engine");
   private static final AttributeKey<String> WORKFLOW_RUN_CONFIGURATION_KEY = stringKey("workflow.run.configuration");
   private static final AttributeKey<String> WORKFLOW_EXECUTION_ID_KEY = stringKey("workflow.execution.id");
   private static final AttributeKey<String> WORKFLOW_CONTAINER_ID_KEY = stringKey("workflow.container.id");
@@ -67,8 +70,7 @@ public class TraceWorkflowExecutionExtensionPoint
   private static final Tracer tracer = GlobalOpenTelemetry.getTracer(INSTRUMENTATION_SCOPE);
   
   private LongCounter workflow_execution_count;
-  //private LongCounter workflow_execution_successes;
-  //private LongCounter workflow_execution_failures;
+  private LongCounter action_execution_count;
 
   public TraceWorkflowExecutionExtensionPoint() {
     super();
@@ -76,49 +78,47 @@ public class TraceWorkflowExecutionExtensionPoint
     workflow_execution_count = meter.counterBuilder("workflow.execution.count")
         .setDescription("Counts workflow execution.").setUnit("unit").build();
     
-//    workflow_execution_successes = meter.counterBuilder("workflow.execution.success.count")
-//        .setDescription("Counts workflow execution successes.").setUnit("unit").build();
-
-//    workflow_execution_failures = meter.counterBuilder("workflow.execution.failure.count")
-//        .setDescription("Counts workflow execution failures.").setUnit("unit").build();
+    action_execution_count = meter.counterBuilder("action.execution.count")
+        .setDescription("Counts workflow action execution.").setUnit("unit").build();
   }
 
   @Override
   public void callExtensionPoint(ILogChannel log, IVariables variables,
       IWorkflowEngine<WorkflowMeta> workflow) throws HopException {
 
-    Attributes attributes = Attributes.builder()
-        .put(WORKFLOW_RUN_CONFIGURATION_KEY,workflow.getWorkflowRunConfiguration().getName())
-        .put(WORKFLOW_CONTAINER_ID_KEY,workflow.getContainerId())
-        .put(WORKFLOW_EXECUTION_ID_KEY,workflow.getLogChannelId())
-        .put(WORKFLOW_NAME_KEY, workflow.getWorkflowMeta().getName())        
-        .put(WORKFLOW_DESCRIPTION_KEY,workflow.getWorkflowMeta().getDescription())
-        .put(WORKFLOW_FIELNAME_KEY,workflow.getFilename())
-        .build();
-    
+    WorkflowEnginePlugin workflowPlugin = workflow.getClass().getAnnotation(WorkflowEnginePlugin.class);
+        
+    // Create workflow trace builder
     SpanBuilder spanBuilder = tracer.spanBuilder(workflow.getWorkflowName())
         .setSpanKind(OpenTelemetryPlugin.getSpanKind())
-        .setAttribute("component", "workflow")
-        .setAllAttributes(attributes)     
+        .setAttribute(COMPONENT_KEY, "workflow")
+        .setAttribute(WORKFLOW_ENGINE_KEY, workflowPlugin.id())
+        .setAttribute(WORKFLOW_RUN_CONFIGURATION_KEY,workflow.getWorkflowRunConfiguration().getName())
+        .setAttribute(WORKFLOW_CONTAINER_ID_KEY,workflow.getContainerId())
+        .setAttribute(WORKFLOW_EXECUTION_ID_KEY,workflow.getLogChannelId())
+        .setAttribute(WORKFLOW_NAME_KEY, workflow.getWorkflowMeta().getName())        
+        .setAttribute(WORKFLOW_DESCRIPTION_KEY,workflow.getWorkflowMeta().getDescription())
+        .setAttribute(WORKFLOW_FIELNAME_KEY,workflow.getFilename())
         .setStartTimestamp(workflow.getExecutionStartDate().toInstant());
 
+    // Set parent
     IWorkflowEngine<?> parent = workflow.getParentWorkflow();
     if (parent != null) {
-      Span parentSpan = (Span) parent.getExtensionDataMap().get(WORKFLOW_SPAN);
+      Span parentSpan = (Span) parent.getExtensionDataMap().get(CURRENT_WORKFLOW_SPAN);
       spanBuilder.setParent(Context.current().with(parentSpan));
     }
 
     Span workflowSpan = spanBuilder.startSpan();
 
-    workflow.getExtensionDataMap().put(WORKFLOW_SPAN, workflowSpan);
+    workflow.getExtensionDataMap().put(CURRENT_WORKFLOW_SPAN, workflowSpan);
 
     workflow.addWorkflowFinishedListener(engine -> {
 
       
       
-      Result result = engine.getResult();
+      Result result = engine.getResult();      
       if (result.getNrErrors() > 0) {
-        workflowSpan.setStatus(StatusCode.ERROR);
+        workflowSpan.setStatus(StatusCode.ERROR);        
        // attributes.
         //workflowSpan.recordException(log.);
         //workflow_execution_failures.add(1, attributes);
@@ -131,7 +131,10 @@ public class TraceWorkflowExecutionExtensionPoint
         workflowSpan.end(engine.getExecutionEndDate().toInstant());
       }      
       
-      workflow_execution_count.add(1, attributes);
+      // Metrics
+      workflow_execution_count.add(1,  Attributes.builder() 
+          .put(WORKFLOW_ENGINE_KEY, workflowPlugin.id())
+          .build());
       
 //      io.opentelemetry.api.logs.Logger logger = GlobalOpenTelemetry.get().getLogsBridge().get("custom-log-appender");
 //      logger
@@ -154,12 +157,16 @@ public class TraceWorkflowExecutionExtensionPoint
 //        }
 
         Span actionSpan =
-            tracer.spanBuilder(actionMeta.getName()).setParent(Context.current().with(workflowSpan))
-                .startSpan().setAttribute("component", "action")
+            tracer.spanBuilder(actionMeta.getName())
+                .setParent(Context.current().with(workflowSpan))
+                .setAttribute(COMPONENT_KEY, "action")
                 .setAttribute(ACTION_PLUGIN_ID_KEY, action.getPluginId())
-                .setAttribute(ACTION_DESCRIPTION_KEY, action.getDescription());
+                .setAttribute(ACTION_DESCRIPTION_KEY, action.getDescription())
+                .startSpan();
 
-        workflow.getExtensionDataMap().put(ACTION_SPAN, actionSpan);
+        workflow.getExtensionDataMap().put(CURRENT_ACTION_SPAN, actionSpan);
+        
+        
       }
 
       @Override
@@ -171,10 +178,18 @@ public class TraceWorkflowExecutionExtensionPoint
 //          return;
 //        }
 
-        Span actionSpan = (Span) workflow.getExtensionDataMap().get(ACTION_SPAN);
+        Span actionSpan = (Span) workflow.getExtensionDataMap().get(CURRENT_ACTION_SPAN);
         if (actionSpan != null) {
           actionSpan.end();
         }
+        
+        if ( result.stopped ) {
+          //metricAttributes.p
+        }
+        
+        action_execution_count.add(1,  Attributes.builder() 
+            .put(ACTION_PLUGIN_ID_KEY, action.getPluginId())
+            .build());
       }
     });
 
