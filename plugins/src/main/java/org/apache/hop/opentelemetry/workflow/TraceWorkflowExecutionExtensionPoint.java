@@ -47,15 +47,13 @@ import io.opentelemetry.context.Context;
     extensionPointId = "WorkflowStart")
 public class TraceWorkflowExecutionExtensionPoint extends OpenTelemetryExecution implements IExtensionPoint<IWorkflowEngine<WorkflowMeta>> {
 
-  public static final AttributeKey<String> WORKFLOW_ENGINE_KEY = stringKey("workflow.engine");
-  public static final AttributeKey<String> WORKFLOW_RUN_CONFIGURATION_KEY = stringKey("workflow.run.configuration");
-  public static final AttributeKey<String> WORKFLOW_EXECUTION_ID_KEY = stringKey("workflow.execution.id");
-  public static final AttributeKey<String> WORKFLOW_CONTAINER_ID_KEY = stringKey("workflow.container.id");
-  public static final AttributeKey<String> WORKFLOW_NAME_KEY = stringKey("workflow.name");
-  public static final AttributeKey<String> WORKFLOW_DESCRIPTION_KEY = stringKey("workflow.description");
-  public static final AttributeKey<String> WORKFLOW_FIELNAME_KEY = stringKey("workflow.filename");
-  public static final AttributeKey<String> ACTION_PLUGIN_ID_KEY = stringKey("action.plugin.id");
-  public static final AttributeKey<String> ACTION_DESCRIPTION_KEY = stringKey("action.description");
+  public static final AttributeKey<String> WORKFLOW_ENGINE_KEY = stringKey("hop.workflow.engine");
+  public static final AttributeKey<String> WORKFLOW_RUN_CONFIGURATION_KEY = stringKey("hop.workflow.run.configuration");
+  public static final AttributeKey<String> WORKFLOW_EXECUTION_ID_KEY = stringKey("hop.workflow.execution.id");
+  public static final AttributeKey<String> WORKFLOW_CONTAINER_ID_KEY = stringKey("hop.workflow.container.id");
+  public static final AttributeKey<String> WORKFLOW_NAME_KEY = stringKey("hop.workflow.name");
+  public static final AttributeKey<String> WORKFLOW_FIELNAME_KEY = stringKey("hop.workflow.filename");
+  public static final AttributeKey<String> ACTION_PLUGIN_ID_KEY = stringKey("hop.action.plugin.id");
     
   private LongCounter workflow_execution_count;
   private LongCounter action_execution_count;
@@ -152,7 +150,7 @@ public class TraceWorkflowExecutionExtensionPoint extends OpenTelemetryExecution
                 .setParent(Context.current().with(workflowSpan))
                 .setAttribute(COMPONENT_KEY, ExecutionType.Action.name())
                 .setAttribute(ACTION_PLUGIN_ID_KEY, action.getPluginId())
-                .setAttribute(ACTION_DESCRIPTION_KEY, action.getDescription())
+                //.setAttribute(ACTION_DESCRIPTION_KEY, action.getDescription())
                 .startSpan();
 
         

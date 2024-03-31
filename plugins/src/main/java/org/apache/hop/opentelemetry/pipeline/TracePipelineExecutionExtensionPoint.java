@@ -46,12 +46,11 @@ public class TracePipelineExecutionExtensionPoint extends OpenTelemetryExecution
 
   public static final String PIPELINE_LOGGING_FLAG = "PipelineLoggingActive";
 
-  public static final AttributeKey<String> PIPELINE_ENGINE_KEY = stringKey("pipeline.engine");
-  public static final AttributeKey<String> PIPELINE_EXECUTION_ID_KEY = stringKey("pipeline.execution.id");
-  public static final AttributeKey<String> PIPELINE_CONTAINER_ID_KEY = stringKey("pipeline.container.id");
-  public static final AttributeKey<String> PIPELINE_NAME_KEY = stringKey("pipeline.name");
-  public static final AttributeKey<String> PIPELINE_DESCRIPTION_KEY = stringKey("pipeline.description");
-  public static final AttributeKey<String> PIPELINE_FIELNAME_KEY = stringKey("pipeline.filename");
+  public static final AttributeKey<String> PIPELINE_ENGINE_KEY = stringKey("hop.pipeline.engine");
+  public static final AttributeKey<String> PIPELINE_EXECUTION_ID_KEY = stringKey("hop.pipeline.execution.id");
+  public static final AttributeKey<String> PIPELINE_CONTAINER_ID_KEY = stringKey("hop.pipeline.container.id");
+  public static final AttributeKey<String> PIPELINE_NAME_KEY = stringKey("hop.pipeline.name");
+  public static final AttributeKey<String> PIPELINE_FIELNAME_KEY = stringKey("hop.pipeline.filename");
 
   private LongCounter pipeline_execution_count;
   private LongCounter transform_execution_count;
