@@ -18,11 +18,27 @@
 package org.apache.hop.opentelemetry;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hop.core.Const;
+import org.apache.hop.core.HopVersionProvider;
 import org.apache.hop.core.config.HopConfig;
+import org.apache.hop.core.logging.ILogChannel;
+import org.apache.hop.core.variables.IVariables;
 import org.apache.hop.core.variables.Variable;
 import org.apache.hop.core.variables.VariableScope;
-import io.opentelemetry.api.trace.SpanKind;
+import java.util.concurrent.TimeUnit;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.exporter.otlp.logs.OtlpGrpcLogRecordExporter;
+import io.opentelemetry.exporter.otlp.metrics.OtlpGrpcMetricExporter;
+import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter;
+import io.opentelemetry.sdk.OpenTelemetrySdk;
+import io.opentelemetry.sdk.logs.SdkLoggerProvider;
+import io.opentelemetry.sdk.logs.export.BatchLogRecordProcessor;
+import io.opentelemetry.sdk.metrics.SdkMeterProvider;
+import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader;
+import io.opentelemetry.sdk.resources.Resource;
+import io.opentelemetry.sdk.trace.SdkTracerProvider;
+import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
+import io.opentelemetry.sdk.trace.samplers.Sampler;
+import io.opentelemetry.semconv.ResourceAttributes;
 
 public class OpenTelemetryPlugin {
   
@@ -38,38 +54,53 @@ public class OpenTelemetryPlugin {
   @Variable(scope = VariableScope.SYSTEM, description = "Maximum time the OTLP exporter will wait for each batch export.")
   public static final String OTEL_EXPORTER_OTLP_TIMEOUT = "OTEL_EXPORTER_OTLP_TIMEOUT";
   
-  private static OpenTelemetryConfig instance;
+  private static OpenTelemetryPlugin instance;
   
   /**
    * Gets instance
    *
    * @return value of instance
    */
-  public static OpenTelemetryConfig getInstance() {
+  public static OpenTelemetryPlugin getInstance() {
     if (instance == null) {      
-      instance = new OpenTelemetryConfig();
+      instance = new OpenTelemetryPlugin();
     }
     return instance;
   }
   
-  public OpenTelemetryPlugin() {
+  private OpenTelemetryPlugin() {
     super();
   }
-  
-  public static SpanKind getSpanKind() {
-    if ("SERVER".equalsIgnoreCase(Const.getHopPlatformRuntime())) {
-      return SpanKind.SERVER;
-    }
-    if ("GUI".equalsIgnoreCase(Const.getHopPlatformRuntime())) {
-      return SpanKind.CLIENT;
-    }
-    return SpanKind.CLIENT;
+
+  void init(ILogChannel log, IVariables variables) {
+    try {
+      
+      //  Thread.sleep(5000);
+        
+        OpenTelemetryConfig config = loadConfig();
+        
+        log.logBasic("OpenTelemetry initialization service '"+config.getServiceName()+"' to endpoint: "+config.getEndpoint());
+
+        // Initialize OpenTelemetry
+        //
+        OpenTelemetrySdk telemetry = OpenTelemetrySdk.builder()
+            .setLoggerProvider(createLoggerProvider(config))
+            .setTracerProvider(createTracerProvider(config))
+            .setMeterProvider(createMeterProvider(config))
+            .buildAndRegisterGlobal();
+
+        // Add hook to close SDK, which flushes logs, metrics and traces
+        //
+        Runtime.getRuntime().addShutdownHook(new Thread(telemetry::close));
+      } catch (Exception e) {
+        log.logError("OpenTelemetry initialization error", e);
+      }
   }
   
   /**
    *  Load configuration from the HopConfig store 
    */
-  public static OpenTelemetryConfig loadConfig() {   
+  public OpenTelemetryConfig loadConfig() {   
     OpenTelemetryConfig config = new OpenTelemetryConfig();
 
     // By default use system properties
@@ -89,21 +120,72 @@ public class OpenTelemetryPlugin {
     if ( StringUtils.isEmpty(headers) ) {
       headers = HopConfig.readOptionString(OTEL_EXPORTER_OTLP_HEADERS, "");
     }
-    //System.out.println(OTEL_EXPORTER_OTLP_HEADERS+"="+headers);
     config.setHeadersAsString(headers);
     
    // config.setTimeout(HopConfig.readOptionInteger(OTEL_EXPORTER_OTLP_TIMEOUT, 10));  
-        
     return config;
   }
 
   /**
    *  Save configuration to the HopConfig store 
    */
-  public static void saveConfig(OpenTelemetryConfig config) {
+  public void saveConfig(OpenTelemetryConfig config) {
     HopConfig.getInstance().saveOption(OTEL_SERVICE_NAME, config.getServiceName());
     HopConfig.getInstance().saveOption(OTEL_EXPORTER_OTLP_ENDPOINT, config.getEndpoint());
     HopConfig.getInstance().saveOption(OTEL_EXPORTER_OTLP_HEADERS, config.getHeadersAsSrtring());
-    //HopConfig.getInstance().saveOption(OTEL_EXPORTER_OTLP_TIMEOUT, String.valueOf(config.getTimeout()));    
+    HopConfig.getInstance().saveOption(OTEL_EXPORTER_OTLP_TIMEOUT, String.valueOf(config.getTimeout()));    
   }  
+  
+  /** 
+   * Initialize meter provider
+   */
+  public SdkMeterProvider createMeterProvider(OpenTelemetryConfig config) {
+    return SdkMeterProvider.builder().setResource(getResource(config))
+    .registerMetricReader(PeriodicMetricReader.builder(OtlpGrpcMetricExporter.builder()
+        .setEndpoint(config.getEndpoint())
+        .setHeaders(() -> config.getHeaders())
+        .setTimeout(config.getTimeout(), TimeUnit.SECONDS).build())        
+        .build())     
+    .build();
+  }
+  
+  /** 
+   * Initialize tracer provider
+   */
+  public SdkTracerProvider createTracerProvider(OpenTelemetryConfig config) {   
+    return SdkTracerProvider.builder().setResource(getResource(config))
+        .addSpanProcessor(BatchSpanProcessor.builder(OtlpGrpcSpanExporter.builder()
+        .setEndpoint(config.getEndpoint())        
+        .setHeaders(() -> config.getHeaders())
+        .setTimeout(config.getTimeout(), TimeUnit.SECONDS).build())
+        .setScheduleDelay(100, TimeUnit.MILLISECONDS)
+        .build())
+    .setSampler(Sampler.alwaysOn()).build();
+  }
+  
+  /** 
+   * Initialize logger provider
+   */
+  public SdkLoggerProvider createLoggerProvider(OpenTelemetryConfig config) {
+    return SdkLoggerProvider.builder().setResource(getResource(config))
+        .addLogRecordProcessor(BatchLogRecordProcessor.builder(
+            OtlpGrpcLogRecordExporter.builder()
+              .setEndpoint(config.getEndpoint())
+              .setHeaders(() -> config.getHeaders())
+              .setTimeout(config.getTimeout(), TimeUnit.SECONDS)
+              .build())
+            .build())
+        .build();
+  }
+  
+  /**
+   * Build common resource attributes for all spans and metrics
+   */
+  public Resource getResource(OpenTelemetryConfig config) {
+    HopVersionProvider versionProvider = new HopVersionProvider();
+
+    return Resource.getDefault().merge(Resource.create(Attributes.builder()
+        .put(ResourceAttributes.SERVICE_NAME, config.getServiceName())
+        .put(ResourceAttributes.SERVICE_VERSION, versionProvider.getVersion()[0]).build()));
+  }
 }

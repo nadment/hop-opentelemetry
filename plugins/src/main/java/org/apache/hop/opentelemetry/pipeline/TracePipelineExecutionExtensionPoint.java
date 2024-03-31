@@ -24,46 +24,34 @@ import org.apache.hop.core.extension.ExtensionPoint;
 import org.apache.hop.core.extension.IExtensionPoint;
 import org.apache.hop.core.logging.ILogChannel;
 import org.apache.hop.core.variables.IVariables;
-import org.apache.hop.opentelemetry.OpenTelemetryPlugin;
+import org.apache.hop.execution.ExecutionType;
+import org.apache.hop.opentelemetry.OpenTelemetryExecution;
 import org.apache.hop.pipeline.PipelineMeta;
 import org.apache.hop.pipeline.engine.IPipelineEngine;
 import org.apache.hop.pipeline.engine.PipelineEnginePlugin;
 import org.apache.hop.workflow.engine.IWorkflowEngine;
-import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.logs.Severity;
 import io.opentelemetry.api.metrics.LongCounter;
-import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.StatusCode;
-import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 
 @ExtensionPoint(id = "OpenTelemetryTracePipelineExecutionExtensionPoint",
     description = "Trace execution of a pipeline for OpenTelemetry",
     extensionPointId = "PipelinePrepareExecution")
-
-public class TracePipelineExecutionExtensionPoint
+public class TracePipelineExecutionExtensionPoint extends OpenTelemetryExecution
     implements IExtensionPoint<IPipelineEngine<PipelineMeta>> {
 
-  public static final String INSTRUMENTATION_SCOPE = "org.apache.hop.opentelemetry";
-  public static final String CURRENT_WORKFLOW_SPAN = "workflow.span";
   public static final String PIPELINE_LOGGING_FLAG = "PipelineLoggingActive";
 
-  private static final AttributeKey<String> COMPONENT_KEY = stringKey("component");
-  private static final AttributeKey<String> PIPELINE_ENGINE_KEY = stringKey("pipeline.engine");
-  private static final AttributeKey<String> PIPELINE_EXECUTION_ID_KEY = stringKey("pipeline.execution.id");
-  private static final AttributeKey<String> PIPELINE_CONTAINER_ID_KEY = stringKey("pipeline.container.id");
-  private static final AttributeKey<String> PIPELINE_NAME_KEY = stringKey("pipeline.name");
-  private static final AttributeKey<String> PIPELINE_DESCRIPTION_KEY = stringKey("pipeline.description");
-  private static final AttributeKey<String> PIPELINE_FIELNAME_KEY = stringKey("pipeeline.filename");
-
-  // Acquiring a meter
-  private static final Meter meter = GlobalOpenTelemetry.getMeter(INSTRUMENTATION_SCOPE);
-  
-  // Acquiring a tracer
-  private static final Tracer tracer = GlobalOpenTelemetry.getTracer(INSTRUMENTATION_SCOPE);
+  public static final AttributeKey<String> PIPELINE_ENGINE_KEY = stringKey("pipeline.engine");
+  public static final AttributeKey<String> PIPELINE_EXECUTION_ID_KEY = stringKey("pipeline.execution.id");
+  public static final AttributeKey<String> PIPELINE_CONTAINER_ID_KEY = stringKey("pipeline.container.id");
+  public static final AttributeKey<String> PIPELINE_NAME_KEY = stringKey("pipeline.name");
+  public static final AttributeKey<String> PIPELINE_DESCRIPTION_KEY = stringKey("pipeline.description");
+  public static final AttributeKey<String> PIPELINE_FIELNAME_KEY = stringKey("pipeline.filename");
 
   private LongCounter pipeline_execution_count;
   private LongCounter transform_execution_count;
@@ -74,6 +62,12 @@ public class TracePipelineExecutionExtensionPoint
     pipeline_execution_count = meter
     .counterBuilder("pipeline.execution.count")
     .setDescription("Counts pipeline execution.")
+    .setUnit("unit")
+    .build();
+    
+    transform_execution_count = meter
+    .counterBuilder("transformation.execution.count")
+    .setDescription("Counts transformation execution.")
     .setUnit("unit")
     .build();  
   }
@@ -90,32 +84,37 @@ public class TracePipelineExecutionExtensionPoint
     }
     
     PipelineEnginePlugin pipelinePlugin = pipeline.getClass().getAnnotation(PipelineEnginePlugin.class);
-
+    PipelineMeta pipelineMeta = pipeline.getPipelineMeta();
+    
+    // Define context    
+    Context context = Context.current();
+    IWorkflowEngine<?> parentWorkflow = pipeline.getParentWorkflow();
+    if (parentWorkflow != null) {
+      Span parentSpan = (Span) parentWorkflow.getExtensionDataMap().get(PARENT_SPAN);
+      context = context.with(parentSpan);
+    } else {
+      IPipelineEngine<PipelineMeta> parentPipeline = pipeline.getParentPipeline();
+      if (parentPipeline != null) {
+        Span parentSpan = (Span) parentPipeline.getExtensionDataMap().get(PARENT_SPAN);
+        context = context.with(parentSpan);
+      }
+    }
+    
     // Create pipeline trace
-    SpanBuilder spanBuilder = tracer.spanBuilder(pipeline.getPipelineMeta().getName())
-        .setSpanKind(OpenTelemetryPlugin.getSpanKind())
-        .setAttribute(COMPONENT_KEY, "pipeline")
+    final Span pipelineSpan  = tracer.spanBuilder(pipeline.getPipelineMeta().getName())
+        .setSpanKind(getSpanKind())
+        .setParent(context)
+        .setAttribute(COMPONENT_KEY, ExecutionType.Pipeline.name())
         .setAttribute(PIPELINE_ENGINE_KEY, pipelinePlugin.id())
         .setAttribute(PIPELINE_CONTAINER_ID_KEY, pipeline.getContainerId()) 
         .setAttribute(PIPELINE_EXECUTION_ID_KEY, pipeline.getLogChannelId())
-        .setAttribute(PIPELINE_NAME_KEY, pipeline.getPipelineMeta().getName())
-        .setAttribute(PIPELINE_DESCRIPTION_KEY, pipeline.getPipelineMeta().getDescription())    
-        .setAttribute(PIPELINE_FIELNAME_KEY, pipeline.getFilename())
-        .setStartTimestamp(pipeline.getExecutionStartDate().toInstant());
-    
-    Span pipelineSpan = spanBuilder.startSpan();
-    
-    // Set parent
-    IWorkflowEngine<?> parent = pipeline.getParentWorkflow();
-    if (parent != null) {
-      Span parentSpan = (Span) parent.getExtensionDataMap().get(CURRENT_WORKFLOW_SPAN);
-      spanBuilder.setParent(Context.current().with(parentSpan));
-    }
+        .setAttribute(PIPELINE_NAME_KEY, pipelineMeta.getName())   
+        .setAttribute(PIPELINE_FIELNAME_KEY, pipelineMeta.getFilename())
+        .setStartTimestamp(pipeline.getExecutionStartDate().toInstant())
+        .startSpan();
     
     
-    // Pipeline metrics
-    pipeline_execution_count.add(1,  Attributes.builder() 
-        .put(PIPELINE_ENGINE_KEY, pipelinePlugin.id()).build());
+    pipeline.getExtensionDataMap().put(PARENT_SPAN, pipelineSpan);
     
     // Pipeline trace
     pipeline.addExecutionFinishedListener(engine -> {
@@ -129,6 +128,20 @@ public class TracePipelineExecutionExtensionPoint
       
       if ( engine.getExecutionEndDate()!=null ) {
         pipelineSpan.end(engine.getExecutionEndDate().toInstant());
+      }
+
+      // Increment metrics
+      pipeline_execution_count.add(1,  Attributes.builder() 
+          .put(PIPELINE_ENGINE_KEY, pipelinePlugin.id()).build());
+
+      // Logs result
+      if (result.getLogText() != null) {
+        logger.logRecordBuilder()
+            .setContext(Context.current().with(pipelineSpan))
+            .setSeverity(Severity.INFO)
+            .setBody(result.getLogText())
+            .setAttribute(PIPELINE_CONTAINER_ID_KEY, engine.getContainerId())
+            .setAttribute(PIPELINE_EXECUTION_ID_KEY, engine.getLogChannelId()).emit();
       }
     });
   }

@@ -169,7 +169,7 @@ public class OpenTelemetryConfigTab {
   }
 
   private void load() {
-    OpenTelemetryConfig config = OpenTelemetryPlugin.loadConfig();
+    OpenTelemetryConfig config = OpenTelemetryPlugin.getInstance().loadConfig();
 
     // Get the headers 
     //        
@@ -201,7 +201,7 @@ public class OpenTelemetryConfigTab {
       config.setHeaders(headers);
       
       // config.setTimeout(timeout);
-      OpenTelemetryPlugin.saveConfig(config);
+      OpenTelemetryPlugin.getInstance().saveConfig(config);
      
     } catch (Exception e) {
       new ErrorDialog(HopGui.getInstance().getShell(), "Error", "Error saving opentelemetry configuration", e);
