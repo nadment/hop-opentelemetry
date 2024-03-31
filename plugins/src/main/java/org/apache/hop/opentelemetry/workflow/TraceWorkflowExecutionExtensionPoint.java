@@ -26,8 +26,6 @@ import org.apache.hop.core.logging.ILogChannel;
 import org.apache.hop.core.variables.IVariables;
 import org.apache.hop.execution.ExecutionType;
 import org.apache.hop.opentelemetry.OpenTelemetryExecution;
-import org.apache.hop.pipeline.PipelineMeta;
-import org.apache.hop.pipeline.engine.IPipelineEngine;
 import org.apache.hop.workflow.IActionListener;
 import org.apache.hop.workflow.WorkflowMeta;
 import org.apache.hop.workflow.action.ActionMeta;
@@ -52,7 +50,7 @@ public class TraceWorkflowExecutionExtensionPoint extends OpenTelemetryExecution
   public static final AttributeKey<String> WORKFLOW_EXECUTION_ID_KEY = stringKey("hop.workflow.execution.id");
   public static final AttributeKey<String> WORKFLOW_CONTAINER_ID_KEY = stringKey("hop.workflow.container.id");
   public static final AttributeKey<String> WORKFLOW_NAME_KEY = stringKey("hop.workflow.name");
-  public static final AttributeKey<String> WORKFLOW_FIELNAME_KEY = stringKey("hop.workflow.filename");
+  public static final AttributeKey<String> WORKFLOW_FILENAME_KEY = stringKey("hop.workflow.filename");
   public static final AttributeKey<String> ACTION_PLUGIN_ID_KEY = stringKey("hop.action.plugin.id");
     
   private LongCounter workflow_execution_count;
@@ -67,7 +65,7 @@ public class TraceWorkflowExecutionExtensionPoint extends OpenTelemetryExecution
     action_execution_count = meter.counterBuilder("action.execution.count")
         .setDescription("Counts workflow action execution.").setUnit("unit").build();
   }
-
+    
   @Override
   public void callExtensionPoint(ILogChannel log, IVariables variables,
       IWorkflowEngine<WorkflowMeta> workflow) throws HopException {
@@ -80,21 +78,10 @@ public class TraceWorkflowExecutionExtensionPoint extends OpenTelemetryExecution
       return;
     
     // Define context    
-    Context context = Context.current();
-    IWorkflowEngine<WorkflowMeta> parentWorkflow = workflow.getParentWorkflow();
-    if (parentWorkflow != null) {
-      Span parentSpan = (Span) parentWorkflow.getExtensionDataMap().get(PARENT_SPAN);
-      context = context.with(parentSpan);
-    } else {
-      IPipelineEngine<PipelineMeta> parentPipeline = workflow.getParentPipeline();
-      if (parentPipeline != null) {
-        Span parentSpan = (Span) parentPipeline.getExtensionDataMap().get(PARENT_SPAN);
-        context = context.with(parentSpan);
-      }
-    }
+    Context context = getContext(workflow);
     
     // Create workflow trace
-    Span workflowSpan = tracer.spanBuilder(workflow.getWorkflowName())
+    final Span workflowSpan = tracer.spanBuilder(workflow.getWorkflowName())
         .setSpanKind(getSpanKind())
         .setParent(context)
         .setAttribute(COMPONENT_KEY, ExecutionType.Workflow.name())
@@ -103,11 +90,11 @@ public class TraceWorkflowExecutionExtensionPoint extends OpenTelemetryExecution
         .setAttribute(WORKFLOW_CONTAINER_ID_KEY, workflow.getContainerId())
         .setAttribute(WORKFLOW_EXECUTION_ID_KEY, workflow.getLogChannelId())
         .setAttribute(WORKFLOW_NAME_KEY, workflowMeta.getName())        
-        .setAttribute(WORKFLOW_FIELNAME_KEY, workflowMeta.getFilename())
+        .setAttribute(WORKFLOW_FILENAME_KEY, workflowMeta.getFilename())
         .setStartTimestamp(workflow.getExecutionStartDate().toInstant())
         .startSpan();
 
-    workflow.getExtensionDataMap().put(PARENT_SPAN, workflowSpan);
+    workflow.getExtensionDataMap().put(SPAN, workflowSpan);
 
     workflow.addWorkflowFinishedListener(engine -> {
 
@@ -131,7 +118,7 @@ public class TraceWorkflowExecutionExtensionPoint extends OpenTelemetryExecution
       // Logs result
       logger
         .logRecordBuilder()
-        .setContext(Context.current().with(workflowSpan))
+        .setContext(context)
         .setSeverity(Severity.INFO)
         .setBody(result.getLogText())
         .setAttribute(WORKFLOW_CONTAINER_ID_KEY, workflow.getContainerId())
@@ -149,19 +136,19 @@ public class TraceWorkflowExecutionExtensionPoint extends OpenTelemetryExecution
             tracer.spanBuilder(actionMeta.getName())
                 .setParent(Context.current().with(workflowSpan))
                 .setAttribute(COMPONENT_KEY, ExecutionType.Action.name())
+                .setAttribute(WORKFLOW_NAME_KEY, workflowMeta.getName())   
                 .setAttribute(ACTION_PLUGIN_ID_KEY, action.getPluginId())
-                //.setAttribute(ACTION_DESCRIPTION_KEY, action.getDescription())
                 .startSpan();
 
         
-        workflow.getExtensionDataMap().put(ACTION_SPAN+action.hashCode(), actionSpan);
+        action.getExtensionDataMap().put(SPAN, actionSpan);
       }
 
       @Override
       public void afterExecution(IWorkflowEngine workflow, ActionMeta actionMeta, IAction action,
           Result result) {
 
-        Span actionSpan = (Span) workflow.getExtensionDataMap().get(ACTION_SPAN+action.hashCode());
+        Span actionSpan = (Span) action.getExtensionDataMap().get(SPAN);
         if (actionSpan != null) {
           actionSpan.end();
         }

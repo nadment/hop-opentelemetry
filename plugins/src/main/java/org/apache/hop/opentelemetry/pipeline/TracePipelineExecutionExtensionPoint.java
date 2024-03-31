@@ -18,6 +18,7 @@
 package org.apache.hop.opentelemetry.pipeline;
 
 import static io.opentelemetry.api.common.AttributeKey.stringKey;
+import org.apache.hop.core.IExtensionData;
 import org.apache.hop.core.Result;
 import org.apache.hop.core.exception.HopException;
 import org.apache.hop.core.extension.ExtensionPoint;
@@ -27,9 +28,9 @@ import org.apache.hop.core.variables.IVariables;
 import org.apache.hop.execution.ExecutionType;
 import org.apache.hop.opentelemetry.OpenTelemetryExecution;
 import org.apache.hop.pipeline.PipelineMeta;
+import org.apache.hop.pipeline.engine.IEngineComponent;
 import org.apache.hop.pipeline.engine.IPipelineEngine;
 import org.apache.hop.pipeline.engine.PipelineEnginePlugin;
-import org.apache.hop.workflow.engine.IWorkflowEngine;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.logs.Severity;
@@ -50,8 +51,10 @@ public class TracePipelineExecutionExtensionPoint extends OpenTelemetryExecution
   public static final AttributeKey<String> PIPELINE_EXECUTION_ID_KEY = stringKey("hop.pipeline.execution.id");
   public static final AttributeKey<String> PIPELINE_CONTAINER_ID_KEY = stringKey("hop.pipeline.container.id");
   public static final AttributeKey<String> PIPELINE_NAME_KEY = stringKey("hop.pipeline.name");
-  public static final AttributeKey<String> PIPELINE_FIELNAME_KEY = stringKey("hop.pipeline.filename");
-
+  public static final AttributeKey<String> PIPELINE_FILENAME_KEY = stringKey("hop.pipeline.filename");
+  public static final AttributeKey<String> TRANSFORM_NAME_KEY = stringKey("hop.transform.name");
+  public static final AttributeKey<String> TRANSFORM_PLUGIN_ID_KEY = stringKey("hop.transform.plugin.id");
+  
   private LongCounter pipeline_execution_count;
   private LongCounter transform_execution_count;
     
@@ -71,7 +74,6 @@ public class TracePipelineExecutionExtensionPoint extends OpenTelemetryExecution
     .build();  
   }
 
-
   @Override
   public void callExtensionPoint(ILogChannel log, IVariables variables,
       IPipelineEngine<PipelineMeta> pipeline) throws HopException {
@@ -86,18 +88,7 @@ public class TracePipelineExecutionExtensionPoint extends OpenTelemetryExecution
     PipelineMeta pipelineMeta = pipeline.getPipelineMeta();
     
     // Define context    
-    Context context = Context.current();
-    IWorkflowEngine<?> parentWorkflow = pipeline.getParentWorkflow();
-    if (parentWorkflow != null) {
-      Span parentSpan = (Span) parentWorkflow.getExtensionDataMap().get(PARENT_SPAN);
-      context = context.with(parentSpan);
-    } else {
-      IPipelineEngine<PipelineMeta> parentPipeline = pipeline.getParentPipeline();
-      if (parentPipeline != null) {
-        Span parentSpan = (Span) parentPipeline.getExtensionDataMap().get(PARENT_SPAN);
-        context = context.with(parentSpan);
-      }
-    }
+    Context context = getContext(pipeline);
     
     // Create pipeline trace
     final Span pipelineSpan  = tracer.spanBuilder(pipeline.getPipelineMeta().getName())
@@ -108,13 +99,19 @@ public class TracePipelineExecutionExtensionPoint extends OpenTelemetryExecution
         .setAttribute(PIPELINE_CONTAINER_ID_KEY, pipeline.getContainerId()) 
         .setAttribute(PIPELINE_EXECUTION_ID_KEY, pipeline.getLogChannelId())
         .setAttribute(PIPELINE_NAME_KEY, pipelineMeta.getName())   
-        .setAttribute(PIPELINE_FIELNAME_KEY, pipelineMeta.getFilename())
+        .setAttribute(PIPELINE_FILENAME_KEY, pipelineMeta.getFilename())
         .setStartTimestamp(pipeline.getExecutionStartDate().toInstant())
         .startSpan();
     
     
-    pipeline.getExtensionDataMap().put(PARENT_SPAN, pipelineSpan);
+    pipeline.getExtensionDataMap().put(SPAN, pipelineSpan);
     
+    for (IEngineComponent component:pipeline.getComponents()) {
+      if ( component instanceof IExtensionData ) {
+        ((IExtensionData) component).getExtensionDataMap().put(SPAN, pipelineSpan);
+      }
+    }
+
     // Pipeline trace
     pipeline.addExecutionFinishedListener(engine -> {
       Result result = engine.getResult();      
@@ -129,6 +126,20 @@ public class TracePipelineExecutionExtensionPoint extends OpenTelemetryExecution
         pipelineSpan.end(engine.getExecutionEndDate().toInstant());
       }
 
+      // Create transform trace
+      for (IEngineComponent component:pipeline.getComponents()) {
+        Span span = tracer.spanBuilder(component.getName())
+            .setSpanKind(getSpanKind())
+            .setParent(context.with(pipelineSpan))
+            .setAttribute(COMPONENT_KEY, ExecutionType.Transform.name())
+            //.setAttribute(TRANSFORM_PLUGIN_ID_KEY, component.getPluginId())
+            .setAttribute(TRANSFORM_NAME_KEY, component.getName())   
+            .setStartTimestamp(component.getExecutionStartDate().toInstant())                        
+            .startSpan();
+        
+        span.end(component.getExecutionEndDate().toInstant());        
+      }
+            
       // Increment metrics
       pipeline_execution_count.add(1,  Attributes.builder() 
           .put(PIPELINE_ENGINE_KEY, pipelinePlugin.id()).build());
@@ -136,7 +147,7 @@ public class TracePipelineExecutionExtensionPoint extends OpenTelemetryExecution
       // Logs result
       if (result.getLogText() != null) {
         logger.logRecordBuilder()
-            .setContext(Context.current().with(pipelineSpan))
+            .setContext(context)
             .setSeverity(Severity.INFO)
             .setBody(result.getLogText())
             .setAttribute(PIPELINE_CONTAINER_ID_KEY, engine.getContainerId())

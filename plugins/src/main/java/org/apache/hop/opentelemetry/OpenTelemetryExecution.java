@@ -19,22 +19,26 @@ package org.apache.hop.opentelemetry;
 
 import static io.opentelemetry.api.common.AttributeKey.stringKey;
 import org.apache.hop.core.Const;
+import org.apache.hop.core.IExtensionData;
+import org.apache.hop.core.logging.ILoggingObject;
+import org.apache.hop.pipeline.transform.ITransform;
+import org.apache.hop.workflow.action.IAction;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.logs.Logger;
 import io.opentelemetry.api.metrics.Meter;
+import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Context;
 
 
 public class OpenTelemetryExecution {
 
   public static final String INSTRUMENTATION_SCOPE = "org.apache.hop.opentelemetry";
 
-  public static final String PARENT_SPAN = "opentelemetry.span";
-  public static final String ACTION_SPAN = "opentelemetry.span.";
-  
-    
+  public static final String SPAN = "opentelemetry.span";
+      
   public static final AttributeKey<String> COMPONENT_KEY = stringKey("component");
   
   // Acquiring a logger  
@@ -52,5 +56,33 @@ public class OpenTelemetryExecution {
       return SpanKind.CLIENT;
     }
     return SpanKind.CLIENT;
+  }
+
+  public Context getContext(ILoggingObject object) {
+    Context context = Context.current();
+    
+    ILoggingObject parent = object.getParent();    
+    Span span = null;
+
+    // Workflow or pipeline
+    if ( parent instanceof IExtensionData ) {
+      span = (Span) ((IExtensionData) parent).getExtensionDataMap().get(SPAN);      
+    }
+
+    if ( span==null && parent instanceof ITransform ) {
+      ITransform transform = (ITransform) parent;
+      span = (Span) transform.getPipeline().getExtensionDataMap().get(SPAN);            
+    }        
+
+    if ( span==null && parent instanceof IAction ) {
+      IAction action = (IAction) parent;
+      span = (Span) action.getParentWorkflow().getExtensionDataMap().get(SPAN);            
+    }  
+    
+    if ( span!=null ) {
+      context = context.with(span);
+    }
+    
+    return context;
   }
 }
