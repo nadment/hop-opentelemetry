@@ -40,6 +40,7 @@ import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
 import io.opentelemetry.sdk.trace.samplers.Sampler;
 import io.opentelemetry.semconv.ResourceAttributes;
 
+
 public class OpenTelemetryPlugin {
   
   @Variable(scope = VariableScope.SYSTEM, description = "The default service name of spans, metrics, or logs.")

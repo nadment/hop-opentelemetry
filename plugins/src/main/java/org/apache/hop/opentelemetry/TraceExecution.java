@@ -17,36 +17,24 @@
 
 package org.apache.hop.opentelemetry;
 
-import static io.opentelemetry.api.common.AttributeKey.stringKey;
 import org.apache.hop.core.Const;
 import org.apache.hop.core.IExtensionData;
 import org.apache.hop.core.logging.ILoggingObject;
+import org.apache.hop.core.util.Utils;
+import org.apache.hop.core.variables.IVariables;
 import org.apache.hop.pipeline.transform.ITransform;
 import org.apache.hop.workflow.action.IAction;
-import io.opentelemetry.api.GlobalOpenTelemetry;
-import io.opentelemetry.api.common.AttributeKey;
-import io.opentelemetry.api.logs.Logger;
-import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanKind;
-import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 
 
-public class OpenTelemetryExecution {
-
-  public static final String INSTRUMENTATION_SCOPE = "org.apache.hop.opentelemetry";
-
-  public static final String SPAN = "opentelemetry.span";
-      
-  public static final AttributeKey<String> COMPONENT_KEY = stringKey("component");
+public class TraceExecution {
   
-  // Acquiring a logger  
-  protected static final Logger logger = GlobalOpenTelemetry.get().getLogsBridge().get(INSTRUMENTATION_SCOPE);  
-  // Acquiring a meter
-  protected static final Meter meter = GlobalOpenTelemetry.getMeter(INSTRUMENTATION_SCOPE);
-  // Acquiring a tracer
-  protected static final Tracer tracer = GlobalOpenTelemetry.getTracer(INSTRUMENTATION_SCOPE);
+  public static final String VARIABLE_HOP_PROJECT_NAME = "HOP_PROJECT_NAME";
+  public static final String VARIABLE_HOP_ENVIRONMENT_NAME = "HOP_ENVIRONMENT_NAME";
+  
+  public static final String SPAN = "opentelemetry.span";
   
   public static SpanKind getSpanKind() {
     if ("SERVER".equalsIgnoreCase(Const.getHopPlatformRuntime())) {
@@ -84,5 +72,16 @@ public class OpenTelemetryExecution {
     }
     
     return context;
+  }
+  
+  public void addProjectAndEnvironment(IVariables variables, Span span) {
+    String project = variables.getVariable(VARIABLE_HOP_PROJECT_NAME);
+    if ( !Utils.isEmpty(project) ) {
+      span.setAttribute(HopAttributes.SERVICE_PROJECT, project);
+    }
+    String environment = variables.getVariable(VARIABLE_HOP_ENVIRONMENT_NAME);
+    if ( !Utils.isEmpty(environment) ) {
+      span.setAttribute(HopAttributes.SERVICE_ENVIRONMENT, environment);
+    }
   }
 }

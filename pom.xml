@@ -29,8 +29,7 @@ http://www.apache.org/licenses/LICENSE-2.0
 
 	<properties>
 		<license.licenseName>apache_v2</license.licenseName>
-		<hop.home>C:\hop</hop.home>
-		<hop.version>2.7.0</hop.version>		
+		<hop.version>2.8.0</hop.version>		
 		<maven.compiler.source>11</maven.compiler.source>
 		<!-- Third-party Core dependencies -->
 	</properties>

@@ -17,7 +17,6 @@
 
 package org.apache.hop.opentelemetry.pipeline;
 
-import static io.opentelemetry.api.common.AttributeKey.stringKey;
 import org.apache.hop.core.IExtensionData;
 import org.apache.hop.core.Result;
 import org.apache.hop.core.exception.HopException;
@@ -26,48 +25,48 @@ import org.apache.hop.core.extension.IExtensionPoint;
 import org.apache.hop.core.logging.ILogChannel;
 import org.apache.hop.core.variables.IVariables;
 import org.apache.hop.execution.ExecutionType;
-import org.apache.hop.opentelemetry.OpenTelemetryExecution;
+import org.apache.hop.opentelemetry.HopAttributes;
+import org.apache.hop.opentelemetry.TraceExecution;
 import org.apache.hop.pipeline.PipelineMeta;
 import org.apache.hop.pipeline.engine.IEngineComponent;
 import org.apache.hop.pipeline.engine.IPipelineEngine;
 import org.apache.hop.pipeline.engine.PipelineEnginePlugin;
-import io.opentelemetry.api.common.AttributeKey;
+import org.apache.hop.pipeline.transform.ITransform;
+import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.logs.Logger;
 import io.opentelemetry.api.logs.Severity;
 import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
+import io.opentelemetry.semconv.ResourceAttributes;
 
 @ExtensionPoint(id = "OpenTelemetryTracePipelineExecutionExtensionPoint",
     description = "Trace execution of a pipeline for OpenTelemetry",
     extensionPointId = "PipelinePrepareExecution")
-public class TracePipelineExecutionExtensionPoint extends OpenTelemetryExecution
+public class PipelineTraceExecutionExtensionPoint extends TraceExecution
     implements IExtensionPoint<IPipelineEngine<PipelineMeta>> {
+  public static final String INSTRUMENTATION_PIPELINE_SCOPE = "Pipeline";
+  public static final String INSTRUMENTATION_TRANSFORM_SCOPE = "Transform";
 
   public static final String PIPELINE_LOGGING_FLAG = "PipelineLoggingActive";
-
-  public static final AttributeKey<String> PIPELINE_ENGINE_KEY = stringKey("hop.pipeline.engine");
-  public static final AttributeKey<String> PIPELINE_EXECUTION_ID_KEY = stringKey("hop.pipeline.execution.id");
-  public static final AttributeKey<String> PIPELINE_CONTAINER_ID_KEY = stringKey("hop.pipeline.container.id");
-  public static final AttributeKey<String> PIPELINE_NAME_KEY = stringKey("hop.pipeline.name");
-  public static final AttributeKey<String> PIPELINE_FILENAME_KEY = stringKey("hop.pipeline.filename");
-  public static final AttributeKey<String> TRANSFORM_NAME_KEY = stringKey("hop.transform.name");
-  public static final AttributeKey<String> TRANSFORM_PLUGIN_ID_KEY = stringKey("hop.transform.plugin.id");
   
   private LongCounter pipeline_execution_count;
   private LongCounter transform_execution_count;
     
-  public TracePipelineExecutionExtensionPoint() {
+  public PipelineTraceExecutionExtensionPoint() {
     super();
 
-    pipeline_execution_count = meter
+    pipeline_execution_count = GlobalOpenTelemetry.getMeter(INSTRUMENTATION_PIPELINE_SCOPE)
     .counterBuilder("pipeline.execution.count")
     .setDescription("Counts pipeline execution.")
     .setUnit("unit")
     .build();
     
-    transform_execution_count = meter
+    transform_execution_count = GlobalOpenTelemetry.getMeter(INSTRUMENTATION_TRANSFORM_SCOPE)
     .counterBuilder("transformation.execution.count")
     .setDescription("Counts transformation execution.")
     .setUnit("unit")
@@ -83,6 +82,9 @@ public class TracePipelineExecutionExtensionPoint extends OpenTelemetryExecution
     if (pipeline.getExtensionDataMap().get(PIPELINE_LOGGING_FLAG) != null) {
       return;
     }
+
+    // Acquiring a tracer
+    Tracer pipelineTracer = GlobalOpenTelemetry.getTracer(INSTRUMENTATION_PIPELINE_SCOPE);
     
     PipelineEnginePlugin pipelinePlugin = pipeline.getClass().getAnnotation(PipelineEnginePlugin.class);
     PipelineMeta pipelineMeta = pipeline.getPipelineMeta();
@@ -91,69 +93,91 @@ public class TracePipelineExecutionExtensionPoint extends OpenTelemetryExecution
     Context context = getContext(pipeline);
     
     // Create pipeline trace
-    final Span pipelineSpan  = tracer.spanBuilder(pipeline.getPipelineMeta().getName())
-        .setSpanKind(getSpanKind())
+    final Span pipelineSpan  = pipelineTracer.spanBuilder(pipeline.getPipelineMeta().getName())
+        .setSpanKind(SpanKind.SERVER)
         .setParent(context)
-        .setAttribute(COMPONENT_KEY, ExecutionType.Pipeline.name())
-        .setAttribute(PIPELINE_ENGINE_KEY, pipelinePlugin.id())
-        .setAttribute(PIPELINE_CONTAINER_ID_KEY, pipeline.getContainerId()) 
-        .setAttribute(PIPELINE_EXECUTION_ID_KEY, pipeline.getLogChannelId())
-        .setAttribute(PIPELINE_NAME_KEY, pipelineMeta.getName())   
-        .setAttribute(PIPELINE_FILENAME_KEY, pipelineMeta.getFilename())
+        .setAttribute(ResourceAttributes.OTEL_SCOPE_NAME, ExecutionType.Pipeline.name())
+        .setAttribute(HopAttributes.PIPELINE_ENGINE, pipelinePlugin.id())
+        .setAttribute(HopAttributes.PIPELINE_CONTAINER_ID, pipeline.getContainerId()) 
+        .setAttribute(HopAttributes.PIPELINE_EXECUTION_ID, pipeline.getLogChannelId())
+        .setAttribute(HopAttributes.PIPELINE_FILE_PATH, pipelineMeta.getFilename())
         .setStartTimestamp(pipeline.getExecutionStartDate().toInstant())
         .startSpan();
     
+    this.addProjectAndEnvironment(variables, pipelineSpan);
     
     pipeline.getExtensionDataMap().put(SPAN, pipelineSpan);
     
+    // Set pipeline span to all transforms
     for (IEngineComponent component:pipeline.getComponents()) {
       if ( component instanceof IExtensionData ) {
         ((IExtensionData) component).getExtensionDataMap().put(SPAN, pipelineSpan);
       }
     }
-
+    
     // Pipeline trace
     pipeline.addExecutionFinishedListener(engine -> {
       Result result = engine.getResult();      
-      if ( result.getNrErrors()>0 ) {        
-        pipelineSpan.setStatus(StatusCode.ERROR);
-      } 
-      else {
-        pipelineSpan.setStatus(StatusCode.OK);
-      }
-      
+      pipelineSpan.setStatus(result.getNrErrors()>0 ? StatusCode.ERROR:StatusCode.OK);
+
       if ( engine.getExecutionEndDate()!=null ) {
         pipelineSpan.end(engine.getExecutionEndDate().toInstant());
       }
+      
+      // Acquiring a tracer
+      Tracer transformTracer = GlobalOpenTelemetry.getTracer(INSTRUMENTATION_TRANSFORM_SCOPE);
 
-      // Create transform trace
+      // Create transform trace after execution
+      Context transformContext = context.with(pipelineSpan);
       for (IEngineComponent component:pipeline.getComponents()) {
-        Span span = tracer.spanBuilder(component.getName())
-            .setSpanKind(getSpanKind())
-            .setParent(context.with(pipelineSpan))
-            .setAttribute(COMPONENT_KEY, ExecutionType.Transform.name())
-            //.setAttribute(TRANSFORM_PLUGIN_ID_KEY, component.getPluginId())
-            .setAttribute(TRANSFORM_NAME_KEY, component.getName())   
+        
+        String pluginId = null;
+        if ( component instanceof ITransform ) {
+          pluginId = ((ITransform) component).getTransformPluginId();
+        }
+        
+        Span transformSpan = transformTracer.spanBuilder(component.getName())
+            .setSpanKind(SpanKind.SERVER)
+            .setParent(transformContext)
+            .setAttribute(ResourceAttributes.OTEL_SCOPE_NAME, ExecutionType.Transform.name())
+            .setAttribute(HopAttributes.TRANSFORM_PLUGIN_ID, pluginId)
             .setStartTimestamp(component.getExecutionStartDate().toInstant())                        
             .startSpan();
         
-        span.end(component.getExecutionEndDate().toInstant());        
+        if ( component.getExecutionEndDate()!=null ) {
+          transformSpan.end(component.getExecutionEndDate().toInstant()); 
+        }
+        
+        transformSpan.setStatus(component.getErrors()>0 ? StatusCode.ERROR:StatusCode.OK);
+        
+        this.addProjectAndEnvironment(variables, transformSpan);
       }
             
       // Increment metrics
       pipeline_execution_count.add(1,  Attributes.builder() 
-          .put(PIPELINE_ENGINE_KEY, pipelinePlugin.id()).build());
+          .put(HopAttributes.PIPELINE_ENGINE, pipelinePlugin.id()).build());
 
-      // Logs result
+      // Logs pipeline result
       if (result.getLogText() != null) {
+
+        // Acquiring a logger  
+        Logger logger = GlobalOpenTelemetry.get().getLogsBridge().get(INSTRUMENTATION_PIPELINE_SCOPE);  
+        
         logger.logRecordBuilder()
             .setContext(context)
             .setSeverity(Severity.INFO)
             .setBody(result.getLogText())
-            .setAttribute(PIPELINE_CONTAINER_ID_KEY, engine.getContainerId())
-            .setAttribute(PIPELINE_EXECUTION_ID_KEY, engine.getLogChannelId()).emit();
+            //.setAttribute(COMPONENT_KEY, ExecutionType.Pipeline.name())
+            .setAttribute(HopAttributes.PIPELINE_CONTAINER_ID, engine.getContainerId())
+            .setAttribute(HopAttributes.PIPELINE_EXECUTION_ID, engine.getLogChannelId()).emit();
       }
     });
+    
+    
+    pipeline.addExecutionStoppedListener(engine -> {
+      pipelineSpan.addEvent("Stopped");
+    }); 
+   
   }
 }
 
