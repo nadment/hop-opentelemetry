@@ -22,9 +22,11 @@ import io.opentelemetry.api.common.AttributeKey;
 
 
 public final class HopAttributes {
+  /** The name of the Hop tool running. */
+  public static final AttributeKey<String> SERVICE_PLATFORM_RUNTIME = stringKey("service.platform.runtime");
  
-  public static final AttributeKey<String> SERVICE_PROJECT = stringKey("service.project");
-  public static final AttributeKey<String> SERVICE_ENVIRONMENT = stringKey("service.environment");
+  public static final AttributeKey<String> HOP_PROJECT = stringKey("hop.project");
+  public static final AttributeKey<String> HOP_ENVIRONMENT = stringKey("hop.environment");
   
   public static final AttributeKey<String> WORKFLOW_ENGINE = stringKey("hop.workflow.engine");
   public static final AttributeKey<String> WORKFLOW_RUN_CONFIGURATION = stringKey("hop.workflow.run.configuration");

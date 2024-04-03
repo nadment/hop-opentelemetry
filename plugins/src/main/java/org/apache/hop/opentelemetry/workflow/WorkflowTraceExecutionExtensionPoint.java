@@ -104,7 +104,7 @@ public class WorkflowTraceExecutionExtensionPoint extends TraceExecution impleme
       // Update trace
       Result result = engine.getResult();      
 
-      workflowSpan.setStatus(result.getNrErrors()>0 ? StatusCode.ERROR:StatusCode.OK);
+      workflowSpan.setStatus(result.getNrErrors()>0 ? StatusCode.ERROR:StatusCode.OK, workflow.getStatusDescription());
       
       if ( engine.getExecutionEndDate()!=null ) {
         workflowSpan.end(engine.getExecutionEndDate().toInstant());

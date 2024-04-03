@@ -32,6 +32,7 @@ import org.apache.hop.pipeline.engine.IEngineComponent;
 import org.apache.hop.pipeline.engine.IPipelineEngine;
 import org.apache.hop.pipeline.engine.PipelineEnginePlugin;
 import org.apache.hop.pipeline.transform.ITransform;
+import java.time.Instant;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.logs.Logger;
@@ -105,7 +106,7 @@ public class PipelineTraceExecutionExtensionPoint extends TraceExecution
         .startSpan();
     
     this.addProjectAndEnvironment(variables, pipelineSpan);
-    
+
     pipeline.getExtensionDataMap().put(SPAN, pipelineSpan);
     
     // Set pipeline span to all transforms
@@ -118,7 +119,7 @@ public class PipelineTraceExecutionExtensionPoint extends TraceExecution
     // Pipeline trace
     pipeline.addExecutionFinishedListener(engine -> {
       Result result = engine.getResult();      
-      pipelineSpan.setStatus(result.getNrErrors()>0 ? StatusCode.ERROR:StatusCode.OK);
+      pipelineSpan.setStatus(result.getNrErrors()>0 ? StatusCode.ERROR:StatusCode.OK, pipeline.getStatusDescription());
 
       if ( engine.getExecutionEndDate()!=null ) {
         pipelineSpan.end(engine.getExecutionEndDate().toInstant());
@@ -136,12 +137,18 @@ public class PipelineTraceExecutionExtensionPoint extends TraceExecution
           pluginId = ((ITransform) component).getTransformPluginId();
         }
         
+        // In Beam context execution start date is null 
+        Instant executionStartDate = null;
+        if ( component.getExecutionStartDate()!=null )  {
+          executionStartDate = component.getExecutionStartDate().toInstant();
+        }
+        
         Span transformSpan = transformTracer.spanBuilder(component.getName())
             .setSpanKind(SpanKind.SERVER)
             .setParent(transformContext)
             .setAttribute(ResourceAttributes.OTEL_SCOPE_NAME, ExecutionType.Transform.name())
             .setAttribute(HopAttributes.TRANSFORM_PLUGIN_ID, pluginId)
-            .setStartTimestamp(component.getExecutionStartDate().toInstant())                        
+            .setStartTimestamp(executionStartDate)                        
             .startSpan();
         
         if ( component.getExecutionEndDate()!=null ) {

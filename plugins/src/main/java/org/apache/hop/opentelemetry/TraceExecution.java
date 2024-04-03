@@ -25,7 +25,6 @@ import org.apache.hop.core.variables.IVariables;
 import org.apache.hop.pipeline.transform.ITransform;
 import org.apache.hop.workflow.action.IAction;
 import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.context.Context;
 
 
@@ -36,16 +35,6 @@ public class TraceExecution {
   
   public static final String SPAN = "opentelemetry.span";
   
-  public static SpanKind getSpanKind() {
-    if ("SERVER".equalsIgnoreCase(Const.getHopPlatformRuntime())) {
-      return SpanKind.SERVER;
-    }
-    if ("GUI".equalsIgnoreCase(Const.getHopPlatformRuntime())) {
-      return SpanKind.CLIENT;
-    }
-    return SpanKind.CLIENT;
-  }
-
   public Context getContext(ILoggingObject object) {
     Context context = Context.current();
     
@@ -75,13 +64,14 @@ public class TraceExecution {
   }
   
   public void addProjectAndEnvironment(IVariables variables, Span span) {
+    span.setAttribute(HopAttributes.SERVICE_PLATFORM_RUNTIME, Const.getHopPlatformRuntime());
     String project = variables.getVariable(VARIABLE_HOP_PROJECT_NAME);
     if ( !Utils.isEmpty(project) ) {
-      span.setAttribute(HopAttributes.SERVICE_PROJECT, project);
+      span.setAttribute(HopAttributes.HOP_PROJECT, project);
     }
     String environment = variables.getVariable(VARIABLE_HOP_ENVIRONMENT_NAME);
     if ( !Utils.isEmpty(environment) ) {
-      span.setAttribute(HopAttributes.SERVICE_ENVIRONMENT, environment);
+      span.setAttribute(HopAttributes.HOP_ENVIRONMENT, environment);
     }
   }
 }
