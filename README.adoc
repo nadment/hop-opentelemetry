@@ -22,7 +22,7 @@ This plugin exports distributed telemetry data for analysis, currently sending t
 
 It uses https://opentelemetry.io[OpenTelemetry], an open source observability framework for generating, processing and transmitting telemetry data in a single, unified format. 
 
-OpenTelemetry Metrics and Logging are not yet supported.
+OpenTelemetry Metrics and Logging are not yet correctly supported.
 
 ## How to install
 
@@ -40,10 +40,47 @@ https://hop.apache.org[Apache Hop] 2.7 or above.
 		- OTEL_EXPORTER_OTLP_TIMEOUT: Default timeout is 10 seconds
 3. Restart Hop
 
-### Support
+## Usage
+
+### Trace attributes
+
+[cols="<1,<1", options="header"]
+|===
+|Name|Description
+|service.name|The name of the service.
+|service.platform.runtime|The name of the Hop tool running.
+|hop.project|
+|hop.environment|
+|hop.workflow.engine|
+|hop.workflow.run.configuration|
+|hop.workflow.execution.id|
+|hop.workflow.container.id|
+|hop.workflow.file.path|
+|hop.action.plugin.id|
+|hop.pipeline.engine|
+|hop.pipeline.execution.id|
+|hop.pipeline.container.id|
+|hop.pipeline.file.path|
+|hop.transform.plugin.id|
+|===
+
+### Metrics catalog
+
+The table below provides a list of metrics provided by this plugin.
+
+[cols="<1,<1,<1,<1", options="header"]
+|===
+|Name|Description|Type|Attributes
+|workflow.execution.count|The total number of times a workflow has been executed.|counter|hop.workflow.engine
+|action.execution.count|The total number of times an action has been executed.|counter|hop.action.plugin.id
+|pipeline.execution.count|The total number of times a pipeline has been executed.|counter|hop.pipeline.engine
+|transform.execution.count|The total number of times a transform has been executed.|counter|hop.transform.plugin.id
+|===
+
+## Support
 
 This plugin is provided as is, without any warranties, expressed or implied. This software is not covered by any Support Agreement.
 
-### License
+## License
 
 Licensed under the https://www.apache.org/licenses/LICENSE-2.0[Apache License, Version 2.0].

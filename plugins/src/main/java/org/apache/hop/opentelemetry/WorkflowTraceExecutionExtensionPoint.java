@@ -57,10 +57,10 @@ public class WorkflowTraceExecutionExtensionPoint extends TraceExecution impleme
     super();
 
     workflow_execution_count =  GlobalOpenTelemetry.getMeter(INSTRUMENTATION_WORKFLOW_SCOPE).counterBuilder("workflow.execution.count")
-        .setDescription("Counts workflow execution.").setUnit("unit").build();
+        .setDescription("The total number of times a workflow has been executed.").setUnit("unit").build();
     
     action_execution_count =  GlobalOpenTelemetry.getMeter(INSTRUMENTATION_ACTION_SCOPE).counterBuilder("action.execution.count")
-        .setDescription("Counts workflow action execution.").setUnit("unit").build();
+        .setDescription("The total number of times a action has been executed.").setUnit("unit").build();
   }
     
   @Override

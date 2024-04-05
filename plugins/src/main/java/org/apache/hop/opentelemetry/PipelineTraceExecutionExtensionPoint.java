@@ -61,13 +61,13 @@ public class PipelineTraceExecutionExtensionPoint extends TraceExecution
 
     pipeline_execution_count = GlobalOpenTelemetry.getMeter(INSTRUMENTATION_PIPELINE_SCOPE)
     .counterBuilder("pipeline.execution.count")
-    .setDescription("Counts pipeline execution.")
+    .setDescription("The total number of times a pipeline has been executed.")
     .setUnit("unit")
     .build();
     
     transform_execution_count = GlobalOpenTelemetry.getMeter(INSTRUMENTATION_TRANSFORM_SCOPE)
     .counterBuilder("transformation.execution.count")
-    .setDescription("Counts transformation execution.")
+    .setDescription("The total number of times a transform has been executed.")
     .setUnit("unit")
     .build();  
   }
