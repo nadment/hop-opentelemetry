@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hop.opentelemetry.pipeline;
+package org.apache.hop.opentelemetry;
 
 import org.apache.hop.core.IExtensionData;
 import org.apache.hop.core.Result;
@@ -25,8 +25,6 @@ import org.apache.hop.core.extension.IExtensionPoint;
 import org.apache.hop.core.logging.ILogChannel;
 import org.apache.hop.core.variables.IVariables;
 import org.apache.hop.execution.ExecutionType;
-import org.apache.hop.opentelemetry.HopAttributes;
-import org.apache.hop.opentelemetry.TraceExecution;
 import org.apache.hop.pipeline.PipelineMeta;
 import org.apache.hop.pipeline.engine.IEngineComponent;
 import org.apache.hop.pipeline.engine.IPipelineEngine;

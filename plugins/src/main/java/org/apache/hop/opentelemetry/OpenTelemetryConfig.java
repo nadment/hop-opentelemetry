@@ -18,21 +18,32 @@
 package org.apache.hop.opentelemetry;
 
 import org.apache.commons.lang.StringUtils;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Configuration properties for using OTLP.
+ */
 public class OpenTelemetryConfig {
 
   private String serviceName;
+  /**
+   * URL to the OTel collector's receiver.
+   */
   private String endpoint;
+  private String protocol;
+  /**
+   * Custom HTTP headers you want to pass to the collector, for example auth headers.
+   */
   private Map<String, String> headers;
 
-  private int timeout;
+  private Duration timeout;
 
   public OpenTelemetryConfig() {
     super();
     this.headers = new HashMap<String, String>();
-    this.timeout = 10;
+    this.timeout = Duration.ofSeconds(10);
   }
 
   public String getServiceName() {
@@ -88,11 +99,27 @@ public class OpenTelemetryConfig {
     }
   }
 
-  public int getTimeout() {
+  public String getProtocol() {
+    return protocol;
+  }
+
+  /**
+   * Set the OLTP transport protocol.
+   * <p>Options MUST be one of:
+   * <ul>
+   *    <li>grpc</li>
+   *    <li>http/protobuf</li>
+   * </ul>
+   */
+  public void setProtocol(String protocol) {
+    this.protocol = protocol;
+  }
+
+  public Duration getTimeout() {
     return timeout;
   }
 
-  public void setTimeout(int timeout) {
+  public void setTimeout(Duration timeout) {
     this.timeout = timeout;
   }
 }

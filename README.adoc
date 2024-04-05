@@ -37,6 +37,7 @@ https://hop.apache.org[Apache Hop] 2.7 or above.
 		- OTEL_SERVICE_NAME: Specify logical service name.
 		- OTEL_EXPORTER_OTLP_ENDPOINT: Specify target URL of the OpenTelemetry Collector to which send data.
 		- OTEL_EXPORTER_OTLP_HEADERS: Key-value pairs to be used as headers associated with requests. The format is a list of key-value pairs separated by the "=" character  (i.e.: key1=value1,key2=value2)
+		- OTEL_EXPORTER_OTLP_TIMEOUT: Default timeout is 10 seconds
 3. Restart Hop
 
 ### Support

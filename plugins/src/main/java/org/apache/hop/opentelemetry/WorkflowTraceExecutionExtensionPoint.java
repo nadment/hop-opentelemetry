@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hop.opentelemetry.workflow;
+package org.apache.hop.opentelemetry;
 
 import org.apache.hop.core.Result;
 import org.apache.hop.core.exception.HopException;
@@ -24,8 +24,6 @@ import org.apache.hop.core.extension.IExtensionPoint;
 import org.apache.hop.core.logging.ILogChannel;
 import org.apache.hop.core.variables.IVariables;
 import org.apache.hop.execution.ExecutionType;
-import org.apache.hop.opentelemetry.HopAttributes;
-import org.apache.hop.opentelemetry.TraceExecution;
 import org.apache.hop.workflow.IActionListener;
 import org.apache.hop.workflow.WorkflowMeta;
 import org.apache.hop.workflow.action.ActionMeta;
@@ -147,8 +145,6 @@ public class WorkflowTraceExecutionExtensionPoint extends TraceExecution impleme
                 .setAttribute(ResourceAttributes.OTEL_SCOPE_NAME, ExecutionType.Action.name())                
                 .setAttribute(HopAttributes.ACTION_PLUGIN_ID, action.getPluginId())
                 .startSpan();
-
-        //addProjectAndEnvironment(variables, actionTracer);
         
         action.getExtensionDataMap().put(SPAN, actionSpan);
       }
