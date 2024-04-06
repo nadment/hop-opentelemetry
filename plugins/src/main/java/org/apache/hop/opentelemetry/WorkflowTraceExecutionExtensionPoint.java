@@ -89,6 +89,7 @@ public class WorkflowTraceExecutionExtensionPoint extends TraceExecution impleme
         .setAttribute(HopAttributes.WORKFLOW_RUN_CONFIGURATION, workflow.getWorkflowRunConfiguration().getName())
         .setAttribute(HopAttributes.WORKFLOW_CONTAINER_ID, workflow.getContainerId())
         .setAttribute(HopAttributes.WORKFLOW_EXECUTION_ID, workflow.getLogChannelId())        
+        .setAttribute(HopAttributes.WORKFLOW_VERSION, workflowMeta.getWorkflowVersion())
         .setAttribute(HopAttributes.WORKFLOW_FILE_PATH, workflowMeta.getFilename())
         .setStartTimestamp(workflow.getExecutionStartDate().toInstant())
         .startSpan();

@@ -64,7 +64,6 @@ public class TraceExecution {
   }
   
   public void addProjectAndEnvironment(IVariables variables, Span span) {
-    span.setAttribute(HopAttributes.SERVICE_PLATFORM_RUNTIME, Const.getHopPlatformRuntime());
     String project = variables.getVariable(VARIABLE_HOP_PROJECT_NAME);
     if ( !Utils.isEmpty(project) ) {
       span.setAttribute(HopAttributes.HOP_PROJECT, project);

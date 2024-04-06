@@ -23,23 +23,25 @@ import io.opentelemetry.api.common.AttributeKey;
 
 public final class HopAttributes {
   /** The name of the Hop tool running. */
-  public static final AttributeKey<String> SERVICE_PLATFORM_RUNTIME = stringKey("service.platform.runtime");
- 
+  public static final AttributeKey<String> HOP_RUNTIME = stringKey("hop.runtime"); 
   public static final AttributeKey<String> HOP_PROJECT = stringKey("hop.project");
   public static final AttributeKey<String> HOP_ENVIRONMENT = stringKey("hop.environment");
   
   public static final AttributeKey<String> WORKFLOW_ENGINE = stringKey("hop.workflow.engine");
-  public static final AttributeKey<String> WORKFLOW_RUN_CONFIGURATION = stringKey("hop.workflow.run.configuration");
-  public static final AttributeKey<String> WORKFLOW_EXECUTION_ID = stringKey("hop.workflow.execution.id");
-  public static final AttributeKey<String> WORKFLOW_CONTAINER_ID = stringKey("hop.workflow.container.id");
+  public static final AttributeKey<String> WORKFLOW_RUN_CONFIGURATION = stringKey("hop.workflow.run_configuration");
+  public static final AttributeKey<String> WORKFLOW_EXECUTION_ID = stringKey("hop.workflow.execution_id");
+  public static final AttributeKey<String> WORKFLOW_CONTAINER_ID = stringKey("hop.workflow.container_id");
   public static final AttributeKey<String> WORKFLOW_FILE_PATH = stringKey("hop.workflow.file.path");
+  public static final AttributeKey<String> WORKFLOW_VERSION = stringKey("hop.workflow.version");
   
-  public static final AttributeKey<String> ACTION_PLUGIN_ID = stringKey("hop.action.plugin.id");
+  public static final AttributeKey<String> ACTION_PLUGIN_ID = stringKey("hop.action.plugin_id");
   
   public static final AttributeKey<String> PIPELINE_ENGINE = stringKey("hop.pipeline.engine");
-  public static final AttributeKey<String> PIPELINE_EXECUTION_ID = stringKey("hop.pipeline.execution.id");
-  public static final AttributeKey<String> PIPELINE_CONTAINER_ID = stringKey("hop.pipeline.container.id");
+  public static final AttributeKey<String> PIPELINE_RUN_CONFIGURATION = stringKey("hop.pipeline.run_configuration");
+  public static final AttributeKey<String> PIPELINE_EXECUTION_ID = stringKey("hop.pipeline.execution_id");
+  public static final AttributeKey<String> PIPELINE_CONTAINER_ID = stringKey("hop.pipeline.container_id");
   public static final AttributeKey<String> PIPELINE_FILE_PATH = stringKey("hop.pipeline.file.path");
+  public static final AttributeKey<String> PIPELINE_VERSION = stringKey("hop.pipeline.version");
   
-  public static final AttributeKey<String> TRANSFORM_PLUGIN_ID = stringKey("hop.transform.plugin.id");
+  public static final AttributeKey<String> TRANSFORM_PLUGIN_ID = stringKey("hop.transform.plugin_id");
 }

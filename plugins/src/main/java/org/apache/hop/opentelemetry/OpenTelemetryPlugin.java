@@ -253,7 +253,10 @@ public class OpenTelemetryPlugin {
     HopVersionProvider versionProvider = new HopVersionProvider();
 
     return Resource.getDefault().merge(Resource.create(Attributes.builder()
+        .put(ResourceAttributes.HOST_NAME, Const.getHostname())
         .put(ResourceAttributes.SERVICE_NAME, config.getServiceName())
-        .put(ResourceAttributes.SERVICE_VERSION, versionProvider.getVersion()[0]).build()));
+        .put(ResourceAttributes.SERVICE_VERSION, versionProvider.getVersion()[0])
+        .put(HopAttributes.HOP_RUNTIME, Const.getHopPlatformRuntime())
+        .build()));
   }
 }

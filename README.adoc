@@ -47,21 +47,26 @@ https://hop.apache.org[Apache Hop] 2.7 or above.
 [cols="<1,<1", options="header"]
 |===
 |Name|Description
+|host.name|The name or IP address of the host.
 |service.name|The name of the service.
-|service.platform.runtime|The name of the Hop tool running.
+|service.version|The version of the service.
+|hop.runtime|The name of the Hop tool running (GUI, Server,...).
 |hop.project|
 |hop.environment|
 |hop.workflow.engine|
-|hop.workflow.run.configuration|
-|hop.workflow.execution.id|
-|hop.workflow.container.id|
+|hop.workflow.run_configuration|
+|hop.workflow.execution_id|
+|hop.workflow.container_id|
 |hop.workflow.file.path|
-|hop.action.plugin.id|
+|hop.workflow.version|
+|hop.action.plugin_id|
 |hop.pipeline.engine|
-|hop.pipeline.execution.id|
-|hop.pipeline.container.id|
+|hop.pipeline.run_configuration|
+|hop.pipeline.execution_id|
+|hop.pipeline.container_id|
 |hop.pipeline.file.path|
-|hop.transform.plugin.id|
+|hop.pipeline.version|
+|hop.transform.plugin_id|
 |===
 
 ### Metrics catalog
@@ -72,9 +77,9 @@ The table below provides a list of metrics provided by this plugin.
 |===
 |Name|Description|Type|Attributes
 |workflow.execution.count|The total number of times a workflow has been executed.|counter|hop.workflow.engine
-|action.execution.count|The total number of times an action has been executed.|counter|hop.action.plugin.id
+|action.execution.count|The total number of times an action has been executed.|counter|hop.action.plugin_id
 |pipeline.execution.count|The total number of times a pipeline has been executed.|counter|hop.pipeline.engine
-|transform.execution.count|The total number of times a transform has been executed.|counter|hop.transform.plugin.id
+|transform.execution.count|The total number of times a transform has been executed.|counter|hop.transform.plugin_id
 |===
 
 ## Support

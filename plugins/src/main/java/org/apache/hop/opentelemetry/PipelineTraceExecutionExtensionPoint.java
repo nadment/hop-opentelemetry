@@ -97,9 +97,11 @@ public class PipelineTraceExecutionExtensionPoint extends TraceExecution
         .setParent(context)
         .setAttribute(ResourceAttributes.OTEL_SCOPE_NAME, ExecutionType.Pipeline.name())
         .setAttribute(HopAttributes.PIPELINE_ENGINE, pipelinePlugin.id())
+        .setAttribute(HopAttributes.PIPELINE_RUN_CONFIGURATION, pipeline.getPipelineRunConfiguration().getName())
         .setAttribute(HopAttributes.PIPELINE_CONTAINER_ID, pipeline.getContainerId()) 
         .setAttribute(HopAttributes.PIPELINE_EXECUTION_ID, pipeline.getLogChannelId())
         .setAttribute(HopAttributes.PIPELINE_FILE_PATH, pipelineMeta.getFilename())
+        .setAttribute(HopAttributes.PIPELINE_VERSION, pipelineMeta.getPipelineVersion())
         .setStartTimestamp(pipeline.getExecutionStartDate().toInstant())
         .startSpan();
     
