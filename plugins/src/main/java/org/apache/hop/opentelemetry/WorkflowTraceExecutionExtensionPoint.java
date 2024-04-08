@@ -114,19 +114,20 @@ public class WorkflowTraceExecutionExtensionPoint extends TraceExecution impleme
           .put(HopAttributes.WORKFLOW_ENGINE, workflowPlugin.id())
           .build());
       
-      // Acquiring a logger  
-      Logger logger = GlobalOpenTelemetry.get().getLogsBridge().get(INSTRUMENTATION_WORKFLOW_SCOPE);  
-      
-      // Logs result
-      logger
-        .logRecordBuilder()
-        .setContext(context.with(workflowSpan))
-        .setSeverity(Severity.INFO)        
-        .setBody(result.getLogText())
-        .setAttribute(ResourceAttributes.OTEL_SCOPE_NAME, ExecutionType.Workflow.name())        
-        .setAttribute(HopAttributes.WORKFLOW_CONTAINER_ID, workflow.getContainerId())
-        .setAttribute(HopAttributes.WORKFLOW_EXECUTION_ID, workflow.getLogChannelId())       
-        .emit();
+      // Logs workflow result
+      if (result.getLogText() != null) {
+
+        // Acquiring a logger
+        Logger logger = GlobalOpenTelemetry.get().getLogsBridge().get(INSTRUMENTATION_WORKFLOW_SCOPE);
+
+        // Logs result
+        logger.logRecordBuilder().setContext(context.with(workflowSpan))
+            .setSeverity(Severity.INFO)
+            .setBody(result.getLogText())
+            .setAttribute(ResourceAttributes.OTEL_SCOPE_NAME, ExecutionType.Workflow.name())
+            .setAttribute(HopAttributes.WORKFLOW_CONTAINER_ID, workflow.getContainerId())
+            .setAttribute(HopAttributes.WORKFLOW_EXECUTION_ID, workflow.getLogChannelId()).emit();
+      }
     });
     
     // Also trace every workflow action execution results.
