@@ -43,10 +43,10 @@ import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.semconv.ResourceAttributes;
 
-@ExtensionPoint(id = "OpenTelemetryTracePipelineExecutionExtensionPoint",
+@ExtensionPoint(id = "PipelineTelemetryExtensionPoint",
     description = "Trace execution of a pipeline for OpenTelemetry",
     extensionPointId = "PipelinePrepareExecution")
-public class PipelineTraceExecutionExtensionPoint extends TraceExecution
+public class PipelineExecutionTelemetryExtensionPoint extends ExecutionTelemetry
     implements IExtensionPoint<IPipelineEngine<PipelineMeta>> {
   public static final String INSTRUMENTATION_PIPELINE_SCOPE = "Pipeline";
   public static final String INSTRUMENTATION_TRANSFORM_SCOPE = "Transform";
@@ -56,19 +56,17 @@ public class PipelineTraceExecutionExtensionPoint extends TraceExecution
   private LongCounter pipeline_execution_count;
   private LongCounter transform_execution_count;
     
-  public PipelineTraceExecutionExtensionPoint() {
+  public PipelineExecutionTelemetryExtensionPoint() {
     super();
 
     pipeline_execution_count = GlobalOpenTelemetry.getMeter(INSTRUMENTATION_PIPELINE_SCOPE)
     .counterBuilder("pipeline.execution.count")
     .setDescription("The total number of times a pipeline has been executed.")
-    .setUnit("unit")
     .build();
     
     transform_execution_count = GlobalOpenTelemetry.getMeter(INSTRUMENTATION_TRANSFORM_SCOPE)
     .counterBuilder("transformation.execution.count")
     .setDescription("The total number of times a transform has been executed.")
-    .setUnit("unit")
     .build();  
   }
 
@@ -180,11 +178,10 @@ public class PipelineTraceExecutionExtensionPoint extends TraceExecution
       }
     });
     
-    
+    // Add event if pipeline is stopped
     pipeline.addExecutionStoppedListener(engine -> {
       pipelineSpan.addEvent("Stopped");
     }); 
-   
   }
 }
 

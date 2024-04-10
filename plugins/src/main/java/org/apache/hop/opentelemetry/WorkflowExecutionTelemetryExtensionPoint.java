@@ -42,10 +42,10 @@ import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.semconv.ResourceAttributes;
 
-@ExtensionPoint(id = "OpenTelemetryWorkflowTraceExecutionExtensionPoint",
+@ExtensionPoint(id = "WorkflowTelemetryExtensionPoint",
     description = "Trace execution of a workflow for OpenTelemetry",
     extensionPointId = "WorkflowStart")
-public class WorkflowTraceExecutionExtensionPoint extends TraceExecution implements IExtensionPoint<IWorkflowEngine<WorkflowMeta>> {
+public class WorkflowExecutionTelemetryExtensionPoint extends ExecutionTelemetry implements IExtensionPoint<IWorkflowEngine<WorkflowMeta>> {
   
   public static final String INSTRUMENTATION_WORKFLOW_SCOPE = "Workflow";
   public static final String INSTRUMENTATION_ACTION_SCOPE = "Action";
@@ -53,14 +53,14 @@ public class WorkflowTraceExecutionExtensionPoint extends TraceExecution impleme
   private LongCounter workflow_execution_count;
   private LongCounter action_execution_count;
 
-  public WorkflowTraceExecutionExtensionPoint() {
+  public WorkflowExecutionTelemetryExtensionPoint() {
     super();
 
     workflow_execution_count =  GlobalOpenTelemetry.getMeter(INSTRUMENTATION_WORKFLOW_SCOPE).counterBuilder("workflow.execution.count")
-        .setDescription("The total number of times a workflow has been executed.").setUnit("unit").build();
+        .setDescription("The total number of times a workflow has been executed.").build();
     
     action_execution_count =  GlobalOpenTelemetry.getMeter(INSTRUMENTATION_ACTION_SCOPE).counterBuilder("action.execution.count")
-        .setDescription("The total number of times a action has been executed.").setUnit("unit").build();
+        .setDescription("The total number of times a action has been executed.").build();
   }
     
   @Override
@@ -98,7 +98,7 @@ public class WorkflowTraceExecutionExtensionPoint extends TraceExecution impleme
     
     workflow.getExtensionDataMap().put(SPAN, workflowSpan);
     
-    workflow.addWorkflowFinishedListener(engine -> {
+    workflow.addExecutionFinishedListener(engine -> {
 
       // Update trace
       Result result = engine.getResult();      
@@ -130,8 +130,12 @@ public class WorkflowTraceExecutionExtensionPoint extends TraceExecution impleme
       }
     });
     
+    // Add event if workflow is stopped
+//    workflow.addExecutionStoppedListener(engine -> {
+//      workflowSpan.addEvent("Stopped");
+//    });     
+    
     // Also trace every workflow action execution results.
-    //
     workflow.addActionListener(new IActionListener() {
       @Override
       public void beforeExecution(IWorkflowEngine workflow, ActionMeta actionMeta, IAction action) {

@@ -28,7 +28,7 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Context;
 
 
-public class TraceExecution {
+public class ExecutionTelemetry {
   
   public static final String VARIABLE_HOP_PROJECT_NAME = "HOP_PROJECT_NAME";
   public static final String VARIABLE_HOP_ENVIRONMENT_NAME = "HOP_ENVIRONMENT_NAME";
