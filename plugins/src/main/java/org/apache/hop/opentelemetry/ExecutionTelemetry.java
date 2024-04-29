@@ -17,59 +17,57 @@
 
 package org.apache.hop.opentelemetry;
 
-import org.apache.hop.core.Const;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Context;
 import org.apache.hop.core.IExtensionData;
 import org.apache.hop.core.logging.ILoggingObject;
 import org.apache.hop.core.util.Utils;
 import org.apache.hop.core.variables.IVariables;
 import org.apache.hop.pipeline.transform.ITransform;
 import org.apache.hop.workflow.action.IAction;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.context.Context;
-
 
 public class ExecutionTelemetry {
-  
+
   public static final String VARIABLE_HOP_PROJECT_NAME = "HOP_PROJECT_NAME";
   public static final String VARIABLE_HOP_ENVIRONMENT_NAME = "HOP_ENVIRONMENT_NAME";
-  
+
   public static final String SPAN = "opentelemetry.span";
-  
+
   public Context getContext(ILoggingObject object) {
     Context context = Context.current();
-    
-    ILoggingObject parent = object.getParent();    
+
+    ILoggingObject parent = object.getParent();
     Span span = null;
 
     // Workflow or pipeline
-    if ( parent instanceof IExtensionData ) {
-      span = (Span) ((IExtensionData) parent).getExtensionDataMap().get(SPAN);      
+    if (parent instanceof IExtensionData) {
+      span = (Span) ((IExtensionData) parent).getExtensionDataMap().get(SPAN);
     }
 
-    if ( span==null && parent instanceof ITransform ) {
+    if (span == null && parent instanceof ITransform) {
       ITransform transform = (ITransform) parent;
-      span = (Span) transform.getPipeline().getExtensionDataMap().get(SPAN);            
-    }        
+      span = (Span) transform.getPipeline().getExtensionDataMap().get(SPAN);
+    }
 
-    if ( span==null && parent instanceof IAction ) {
+    if (span == null && parent instanceof IAction) {
       IAction action = (IAction) parent;
-      span = (Span) action.getParentWorkflow().getExtensionDataMap().get(SPAN);            
-    }  
-    
-    if ( span!=null ) {
+      span = (Span) action.getParentWorkflow().getExtensionDataMap().get(SPAN);
+    }
+
+    if (span != null) {
       context = context.with(span);
     }
-    
+
     return context;
   }
-  
+
   public void addProjectAndEnvironment(IVariables variables, Span span) {
     String project = variables.getVariable(VARIABLE_HOP_PROJECT_NAME);
-    if ( !Utils.isEmpty(project) ) {
+    if (!Utils.isEmpty(project)) {
       span.setAttribute(HopAttributes.HOP_PROJECT, project);
     }
     String environment = variables.getVariable(VARIABLE_HOP_ENVIRONMENT_NAME);
-    if ( !Utils.isEmpty(environment) ) {
+    if (!Utils.isEmpty(environment)) {
       span.setAttribute(HopAttributes.HOP_ENVIRONMENT, environment);
     }
   }

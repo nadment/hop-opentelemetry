@@ -25,17 +25,17 @@ import org.apache.hop.core.logging.ILogChannel;
 import org.apache.hop.core.plugins.PluginRegistry;
 import org.apache.hop.core.variables.IVariables;
 
-/**
- * Initialize OpenTelemetry plugin as early as possible in application's lifecycle
- */
-@ExtensionPoint(id = "OpenTelemetryExtensionPoint", extensionPointId = "HopEnvironmentAfterInit",
+/** Initialize OpenTelemetry plugin as early as possible in application's lifecycle */
+@ExtensionPoint(
+    id = "OpenTelemetryExtensionPoint",
+    extensionPointId = "HopEnvironmentAfterInit",
     description = "Initialize OpenTelemetry")
 public class OpenTelemetryExtensionPoint implements IExtensionPoint<PluginRegistry> {
 
   @Override
-  public void callExtensionPoint(ILogChannel log, IVariables variables,
-      PluginRegistry pluginRegistry) throws HopException {
-    
+  public void callExtensionPoint(
+      ILogChannel log, IVariables variables, PluginRegistry pluginRegistry) throws HopException {
+
     OpenTelemetryPlugin.getInstance().init(log, variables);
   }
 }

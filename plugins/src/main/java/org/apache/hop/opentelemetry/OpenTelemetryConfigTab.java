@@ -17,6 +17,8 @@
  */
 package org.apache.hop.opentelemetry;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.hop.core.Const;
 import org.apache.hop.core.gui.plugin.GuiPlugin;
 import org.apache.hop.core.gui.plugin.tab.GuiTab;
@@ -40,13 +42,11 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
-import java.util.HashMap;
-import java.util.Map;
 
 @GuiPlugin(description = "i18n::OpenTelemetryConfig.Description")
 public class OpenTelemetryConfigTab {
   private static final Class<?> PKG = OpenTelemetryConfigTab.class; // For Translator
-  
+
   public OpenTelemetryConfigTab() {
     super();
   }
@@ -62,12 +62,17 @@ public class OpenTelemetryConfigTab {
   public void addConfigOpenTelemetryTab(CTabFolder wTabFolder) {
     int margin = PropsUi.getMargin();
     int middle = PropsUi.getInstance().getMiddlePct();
-    
+
     CTabItem tabItem = new CTabItem(wTabFolder, SWT.NONE);
     tabItem.setFont(GuiResource.getInstance().getFontDefault());
     tabItem.setText(BaseMessages.getString(PKG, "OpenTelemetryConfig.Title"));
-    tabItem.setImage(GuiResource.getInstance().getImage("opentelemetry.svg", this.getClass().getClassLoader(), ConstUi.SMALL_ICON_SIZE,
-        ConstUi.SMALL_ICON_SIZE));
+    tabItem.setImage(
+        GuiResource.getInstance()
+            .getImage(
+                "opentelemetry.svg",
+                this.getClass().getClassLoader(),
+                ConstUi.SMALL_ICON_SIZE,
+                ConstUi.SMALL_ICON_SIZE));
 
     Composite wComposite = new Composite(wTabFolder, SWT.NONE);
     PropsUi.setLook(wComposite);
@@ -80,14 +85,15 @@ public class OpenTelemetryConfigTab {
     //
     Label wlServiceName = new Label(wComposite, SWT.RIGHT);
     wlServiceName.setText(BaseMessages.getString(PKG, "OpenTelemetryConfig.ServiceName.Label"));
-    wlServiceName.setToolTipText(BaseMessages.getString(PKG, "OpenTelemetryConfig.ServiceName.Tooltip"));
+    wlServiceName.setToolTipText(
+        BaseMessages.getString(PKG, "OpenTelemetryConfig.ServiceName.Tooltip"));
     PropsUi.setLook(wlServiceName);
     FormData fdlServiceName = new FormData();
     fdlServiceName.left = new FormAttachment(0, 0);
     fdlServiceName.right = new FormAttachment(middle, -margin);
     fdlServiceName.top = new FormAttachment(0, margin);
     wlServiceName.setLayoutData(fdlServiceName);
-    
+
     wServiceName = new Text(wComposite, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
     PropsUi.setLook(wServiceName);
     FormData fdServiceName = new FormData();
@@ -107,7 +113,7 @@ public class OpenTelemetryConfigTab {
     fdlEndpoint.right = new FormAttachment(middle, -margin);
     fdlEndpoint.top = new FormAttachment(wServiceName, margin);
     wlEndpoint.setLayoutData(fdlEndpoint);
-    
+
     wEndpoint = new Text(wComposite, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
     PropsUi.setLook(wEndpoint);
     FormData fdEndpoint = new FormData();
@@ -115,9 +121,9 @@ public class OpenTelemetryConfigTab {
     fdEndpoint.right = new FormAttachment(100, 0);
     fdEndpoint.top = new FormAttachment(wlEndpoint, 0, SWT.CENTER);
     wEndpoint.setLayoutData(fdEndpoint);
-        
+
     // Headers
-    //    
+    //
     Label wlHeaders = new Label(wComposite, SWT.RIGHT);
     wlHeaders.setText(BaseMessages.getString(PKG, "OpenTelemetryConfig.Headers.Label"));
     wlHeaders.setToolTipText(BaseMessages.getString(PKG, "OpenTelemetryConfig.Headers.Tooltip"));
@@ -127,7 +133,7 @@ public class OpenTelemetryConfigTab {
     fdlHeaders.right = new FormAttachment(middle, -margin);
     fdlHeaders.top = new FormAttachment(wEndpoint, margin);
     wlHeaders.setLayoutData(fdlHeaders);
-    
+
     ColumnInfo[] columns = {
       new ColumnInfo(
           BaseMessages.getString(PKG, "OpenTelemetryConfig.Header.Name.Label"),
@@ -144,7 +150,7 @@ public class OpenTelemetryConfigTab {
     wHeaders =
         new TableView(
             Variables.getADefaultVariableSpace(),
-                wComposite,
+            wComposite,
             SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL,
             columns,
             0,
@@ -156,41 +162,41 @@ public class OpenTelemetryConfigTab {
     fdFields.top = new FormAttachment(wlHeaders, 0, SWT.TOP);
     fdFields.right = new FormAttachment(100, 0);
     fdFields.bottom = new FormAttachment(100, margin);
-    wHeaders.setLayoutData(fdFields);    
+    wHeaders.setLayoutData(fdFields);
     PropsUi.setLook(wHeaders);
-    
+
     load();
-    
+
     // Add listener after load, because save is called on each setText() and we lose headers
     wServiceName.addListener(SWT.Modify, e -> save());
-    wEndpoint.addListener(SWT.Modify, e -> save());    
-    
+    wEndpoint.addListener(SWT.Modify, e -> save());
+
     tabItem.setControl(wComposite);
   }
 
   private void load() {
     OpenTelemetryConfig config = OpenTelemetryPlugin.getInstance().loadConfig();
 
-    // Get the headers 
-    //        
+    // Get the headers
+    //
     for (Map.Entry<String, String> entry : config.getHeaders().entrySet()) {
       TableItem item = new TableItem(wHeaders.table, SWT.NONE);
       item.setText(1, Const.NVL(entry.getKey(), ""));
       item.setText(2, Const.NVL(entry.getValue(), ""));
     }
     wHeaders.optimizeTableView();
-    
-    wServiceName.setText(Const.NVL(config.getServiceName(),""));
-    wEndpoint.setText(Const.NVL(config.getEndpoint(),""));
+
+    wServiceName.setText(Const.NVL(config.getServiceName(), ""));
+    wEndpoint.setText(Const.NVL(config.getEndpoint(), ""));
   }
-  
+
   private void save() {
     try {
       // Save the configuration...
       OpenTelemetryConfig config = new OpenTelemetryConfig();
       config.setServiceName(wServiceName.getText());
       config.setEndpoint(wEndpoint.getText());
-      
+
       Map<String, String> headers = new HashMap<>();
       for (int i = 0; i < wHeaders.nrNonEmpty(); i++) {
         TableItem item = wHeaders.getNonEmpty(i);
@@ -199,12 +205,13 @@ public class OpenTelemetryConfigTab {
         headers.put(name, value);
       }
       config.setHeaders(headers);
-      
+
       // config.setTimeout(timeout);
       OpenTelemetryPlugin.getInstance().saveConfig(config);
-     
+
     } catch (Exception e) {
-      new ErrorDialog(HopGui.getInstance().getShell(), "Error", "Error saving opentelemetry configuration", e);
+      new ErrorDialog(
+          HopGui.getInstance().getShell(), "Error", "Error saving opentelemetry configuration", e);
     }
   }
 }
