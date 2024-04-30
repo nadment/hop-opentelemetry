@@ -60,7 +60,7 @@ http://www.apache.org/licenses/LICENSE-2.0
 		<dependency>
 			<groupId>io.opentelemetry</groupId>
 			<artifactId>opentelemetry-sdk</artifactId>
-			<version>1.36.0</version>
+			<version>1.37.0</version>
 		</dependency>
 
 		<dependency>
