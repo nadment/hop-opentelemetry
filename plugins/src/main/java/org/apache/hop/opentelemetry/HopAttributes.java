@@ -22,6 +22,11 @@ import static io.opentelemetry.api.common.AttributeKey.stringKey;
 import io.opentelemetry.api.common.AttributeKey;
 
 public final class HopAttributes {
+
+  private HopAttributes() {
+    super();
+  }
+
   /** The name of the Hop tool running. */
   public static final AttributeKey<String> HOP_RUNTIME = stringKey("hop.runtime");
 
