@@ -15,6 +15,10 @@ specific language governing permissions and limitations
 under the License.
 ////
 # Hop OpenTelemetry Plugin
+:url-sonarcloud: https://sonarcloud.io/dashboard?id=hop-opentelemetry
+
+image:https://sonarcloud.io/api/project_badges/measure?project=hop-opentelemetry&metric=alert_status[Sonarcloud,link={url-sonarcloud}]
+image:https://sonarcloud.io/api/project_badges/measure?project=hop-opentelemetry&metric=coverage[Sonarcloud,link={url-sonarcloud}]
 
 ## Overview
 
