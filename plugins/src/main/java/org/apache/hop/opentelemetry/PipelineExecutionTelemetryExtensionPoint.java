@@ -17,6 +17,18 @@
 
 package org.apache.hop.opentelemetry;
 
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.logs.Logger;
+import io.opentelemetry.api.logs.Severity;
+import io.opentelemetry.api.metrics.LongCounter;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanKind;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Context;
+import io.opentelemetry.semconv.ResourceAttributes;
+import java.time.Instant;
 import org.apache.hop.core.IExtensionData;
 import org.apache.hop.core.Result;
 import org.apache.hop.core.exception.HopException;
@@ -30,18 +42,6 @@ import org.apache.hop.pipeline.engine.IEngineComponent;
 import org.apache.hop.pipeline.engine.IPipelineEngine;
 import org.apache.hop.pipeline.engine.PipelineEnginePlugin;
 import org.apache.hop.pipeline.transform.ITransform;
-import java.time.Instant;
-import io.opentelemetry.api.GlobalOpenTelemetry;
-import io.opentelemetry.api.common.Attributes;
-import io.opentelemetry.api.logs.Logger;
-import io.opentelemetry.api.logs.Severity;
-import io.opentelemetry.api.metrics.LongCounter;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.SpanKind;
-import io.opentelemetry.api.trace.StatusCode;
-import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Context;
-import io.opentelemetry.semconv.ResourceAttributes;
 
 @ExtensionPoint(
     id = "PipelineTelemetryExtensionPoint",
@@ -171,10 +171,9 @@ public class PipelineExecutionTelemetryExtensionPoint extends ExecutionTelemetry
             transformSpan.setStatus(component.getErrors() > 0 ? StatusCode.ERROR : StatusCode.OK);
 
             this.addProjectAndEnvironment(variables, transformSpan);
-            
-            
-            transform_execution_count.add(1,
-                Attributes.builder().put(HopAttributes.TRANSFORM_PLUGIN_ID, pluginId).build());
+
+            transform_execution_count.add(
+                1, Attributes.builder().put(HopAttributes.TRANSFORM_PLUGIN_ID, pluginId).build());
           }
 
           // Increment metrics
@@ -206,7 +205,5 @@ public class PipelineExecutionTelemetryExtensionPoint extends ExecutionTelemetry
         engine -> {
           pipelineSpan.addEvent("Stopped");
         });
-    
-
   }
 }
