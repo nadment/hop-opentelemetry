@@ -27,7 +27,7 @@ import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
-import io.opentelemetry.semconv.ResourceAttributes;
+import io.opentelemetry.semconv.OtelAttributes;
 import org.apache.hop.core.Result;
 import org.apache.hop.core.exception.HopException;
 import org.apache.hop.core.extension.ExtensionPoint;
@@ -95,7 +95,7 @@ public class WorkflowExecutionTelemetryExtensionPoint extends ExecutionTelemetry
             .spanBuilder(workflow.getWorkflowName())
             .setSpanKind(SpanKind.SERVER)
             .setParent(context)
-            .setAttribute(ResourceAttributes.OTEL_SCOPE_NAME, ExecutionType.Workflow.name())
+            .setAttribute(OtelAttributes.OTEL_SCOPE_NAME, ExecutionType.Workflow.name())
             .setAttribute(HopAttributes.WORKFLOW_ENGINE, workflowPlugin.id())
             .setAttribute(
                 HopAttributes.WORKFLOW_RUN_CONFIGURATION,
@@ -144,7 +144,7 @@ public class WorkflowExecutionTelemetryExtensionPoint extends ExecutionTelemetry
                 .setContext(context.with(workflowSpan))
                 .setSeverity(Severity.INFO)
                 .setBody(result.getLogText())
-                .setAttribute(ResourceAttributes.OTEL_SCOPE_NAME, ExecutionType.Workflow.name())
+                .setAttribute(OtelAttributes.OTEL_SCOPE_NAME, ExecutionType.Workflow.name())
                 .setAttribute(HopAttributes.WORKFLOW_CONTAINER_ID, workflow.getContainerId())
                 .setAttribute(HopAttributes.WORKFLOW_EXECUTION_ID, workflow.getLogChannelId())
                 .emit();
@@ -152,10 +152,7 @@ public class WorkflowExecutionTelemetryExtensionPoint extends ExecutionTelemetry
         });
 
     // Add event if workflow is stopped
-    //    workflow.addExecutionStoppedListener(
-    //        engine -> {
-    //          workflowSpan.addEvent("Stopped");
-    //        });
+    // workflow.addExecutionStoppedListener(engine -> workflowSpan.addEvent("Stopped"));
 
     // Also trace every workflow action execution results.
     workflow.addActionListener(
@@ -173,7 +170,7 @@ public class WorkflowExecutionTelemetryExtensionPoint extends ExecutionTelemetry
                     .spanBuilder(actionMeta.getName())
                     .setSpanKind(SpanKind.SERVER)
                     .setParent(context.with(workflowSpan))
-                    .setAttribute(ResourceAttributes.OTEL_SCOPE_NAME, ExecutionType.Action.name())
+                    .setAttribute(OtelAttributes.OTEL_SCOPE_NAME, ExecutionType.Action.name())
                     .setAttribute(HopAttributes.ACTION_PLUGIN_ID, action.getPluginId())
                     .startSpan();
 

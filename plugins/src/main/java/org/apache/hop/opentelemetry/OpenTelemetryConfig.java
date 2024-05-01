@@ -39,7 +39,7 @@ public class OpenTelemetryConfig {
 
   public OpenTelemetryConfig() {
     super();
-    this.headers = new HashMap<String, String>();
+    this.headers = new HashMap<>();
     this.timeout = Duration.ofSeconds(10);
   }
 
@@ -82,11 +82,12 @@ public class OpenTelemetryConfig {
   }
 
   public void setHeadersAsString(String str) {
-    this.headers = new HashMap<String, String>();
+    this.headers = new HashMap<>();
     if (str == null) {
       return;
     }
-    for (String header : str.split("[,]", 0)) {
+
+    for (String header : str.split(",", 0)) {
       String[] pair = header.split("=", 2);
       if (pair.length == 2) {
         String name = pair[0];

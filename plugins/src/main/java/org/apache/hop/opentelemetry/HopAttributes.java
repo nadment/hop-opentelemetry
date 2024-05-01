@@ -30,7 +30,10 @@ public final class HopAttributes {
   /** The name of the Hop tool running. */
   public static final AttributeKey<String> HOP_RUNTIME = stringKey("hop.runtime");
 
+  /** The name of the Hop project. */
   public static final AttributeKey<String> HOP_PROJECT = stringKey("hop.project");
+
+  /** The name of the Hop environment. */
   public static final AttributeKey<String> HOP_ENVIRONMENT = stringKey("hop.environment");
 
   public static final AttributeKey<String> WORKFLOW_ENGINE = stringKey("hop.workflow.engine");

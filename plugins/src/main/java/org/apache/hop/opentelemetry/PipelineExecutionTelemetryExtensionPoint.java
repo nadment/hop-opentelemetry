@@ -27,7 +27,7 @@ import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
-import io.opentelemetry.semconv.ResourceAttributes;
+import io.opentelemetry.semconv.OtelAttributes;
 import java.time.Instant;
 import org.apache.hop.core.IExtensionData;
 import org.apache.hop.core.Result;
@@ -100,7 +100,7 @@ public class PipelineExecutionTelemetryExtensionPoint extends ExecutionTelemetry
             .spanBuilder(pipeline.getPipelineMeta().getName())
             .setSpanKind(SpanKind.SERVER)
             .setParent(context)
-            .setAttribute(ResourceAttributes.OTEL_SCOPE_NAME, ExecutionType.Pipeline.name())
+            .setAttribute(OtelAttributes.OTEL_SCOPE_NAME, ExecutionType.Pipeline.name())
             .setAttribute(HopAttributes.PIPELINE_ENGINE, pipelinePlugin.id())
             .setAttribute(
                 HopAttributes.PIPELINE_RUN_CONFIGURATION,
@@ -158,8 +158,7 @@ public class PipelineExecutionTelemetryExtensionPoint extends ExecutionTelemetry
                     .spanBuilder(component.getName())
                     .setSpanKind(SpanKind.SERVER)
                     .setParent(transformContext)
-                    .setAttribute(
-                        ResourceAttributes.OTEL_SCOPE_NAME, ExecutionType.Transform.name())
+                    .setAttribute(OtelAttributes.OTEL_SCOPE_NAME, ExecutionType.Transform.name())
                     .setAttribute(HopAttributes.TRANSFORM_PLUGIN_ID, pluginId)
                     .setStartTimestamp(executionStartDate)
                     .startSpan();
@@ -201,9 +200,6 @@ public class PipelineExecutionTelemetryExtensionPoint extends ExecutionTelemetry
         });
 
     // Add event if pipeline is stopped
-    pipeline.addExecutionStoppedListener(
-        engine -> {
-          pipelineSpan.addEvent("Stopped");
-        });
+    pipeline.addExecutionStoppedListener(engine -> pipelineSpan.addEvent("Stopped"));
   }
 }

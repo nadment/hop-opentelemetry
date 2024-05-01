@@ -38,7 +38,8 @@ import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
 import io.opentelemetry.sdk.trace.samplers.Sampler;
-import io.opentelemetry.semconv.ResourceAttributes;
+import io.opentelemetry.semconv.ServiceAttributes;
+import io.opentelemetry.semconv.incubating.HostIncubatingAttributes;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
@@ -190,7 +191,7 @@ public class OpenTelemetryPlugin {
           OtlpGrpcMetricExporter.builder()
               .setEndpoint(config.getEndpoint())
               .setTimeout(config.getTimeout())
-              .setHeaders(() -> config.getHeaders())
+              .setHeaders(config::getHeaders)
               .build();
     } else {
       // Create an OTLP metric exporter via HTTP
@@ -198,7 +199,7 @@ public class OpenTelemetryPlugin {
           OtlpHttpMetricExporter.builder()
               .setEndpoint(config.getEndpoint())
               .setTimeout(config.getTimeout())
-              .setHeaders(() -> config.getHeaders())
+              .setHeaders(config::getHeaders)
               .build();
     }
 
@@ -218,7 +219,7 @@ public class OpenTelemetryPlugin {
           OtlpGrpcSpanExporter.builder()
               .setEndpoint(config.getEndpoint())
               .setTimeout(config.getTimeout())
-              .setHeaders(() -> config.getHeaders())
+              .setHeaders(config::getHeaders)
               .build();
     } else {
       // Create an OTLP trace exporter via HTTP
@@ -226,7 +227,7 @@ public class OpenTelemetryPlugin {
           OtlpHttpSpanExporter.builder()
               .setEndpoint(config.getEndpoint())
               .setTimeout(config.getTimeout())
-              .setHeaders(() -> config.getHeaders())
+              .setHeaders(config::getHeaders)
               .build();
     }
 
@@ -258,7 +259,7 @@ public class OpenTelemetryPlugin {
           OtlpHttpLogRecordExporter.builder()
               .setEndpoint(config.getEndpoint())
               .setTimeout(config.getTimeout())
-              .setHeaders(() -> config.getHeaders())
+              .setHeaders(config::getHeaders)
               .build();
     }
 
@@ -276,9 +277,9 @@ public class OpenTelemetryPlugin {
         .merge(
             Resource.create(
                 Attributes.builder()
-                    .put(ResourceAttributes.HOST_NAME, Const.getHostname())
-                    .put(ResourceAttributes.SERVICE_NAME, config.getServiceName())
-                    .put(ResourceAttributes.SERVICE_VERSION, versionProvider.getVersion()[0])
+                    .put(HostIncubatingAttributes.HOST_NAME, Const.getHostname())
+                    .put(ServiceAttributes.SERVICE_NAME, config.getServiceName())
+                    .put(ServiceAttributes.SERVICE_VERSION, versionProvider.getVersion()[0])
                     .put(HopAttributes.HOP_RUNTIME, Const.getHopPlatformRuntime())
                     .build()));
   }
