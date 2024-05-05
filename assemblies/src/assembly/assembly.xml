@@ -48,7 +48,7 @@
 			<includes>
 					<include>io.opentelemetry.instrumentation:opentelemetry-instrumentation-api.jar</include>
 					<include>io.opentelemetry:opentelemetry-api:jar</include>
-					<include>io.opentelemetry:opentelemetry-api-events:jar</include>
+					<include>io.opentelemetry:opentelemetry-api-incubator:jar</include>
 					<include>io.opentelemetry:opentelemetry-context:jar</include>			
 				  <include>io.opentelemetry:opentelemetry-exporter-common:jar</include>
 				  <include>io.opentelemetry:opentelemetry-exporter-logging:jar</include>
@@ -58,10 +58,13 @@
 				  <include>io.opentelemetry:opentelemetry-extension-incubator:jar</include>		
 				  <include>io.opentelemetry:opentelemetry-sdk:jar</include>
 				  <include>io.opentelemetry:opentelemetry-sdk-common:jar</include>							  
+				  <include>io.opentelemetry:opentelemetry-sdk-extension-autoconfigure</include>
+				  <include>io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi</include>
 				  <include>io.opentelemetry:opentelemetry-sdk-trace:jar</include>
 				  <include>io.opentelemetry:opentelemetry-sdk-metrics:jar</include>
 				  <include>io.opentelemetry:opentelemetry-sdk-logs:jar</include>		
 				  <include>io.opentelemetry.semconv:opentelemetry-semconv:jar</include>								  
+				  <include>io.opentelemetry.semconv:opentelemetry-semconv-incubating:jar</include>
 			</includes>
 		</dependencySet>
 	</dependencySets>

@@ -17,16 +17,18 @@ http://www.apache.org/licenses/LICENSE-2.0
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<artifactId>hop</artifactId>
 		<groupId>org.apache.hop</groupId>
+		<artifactId>hop</artifactId>
     <version>2.9.0-SNAPSHOT</version>
 	</parent>
 	
 	<artifactId>hop-opentelemetry</artifactId>
 	<packaging>pom</packaging>
 	<name>Hop OpenTelemetry</name>
-
+	<version>0.1.0-SNAPSHOT</version>
+	
 	<properties>
+	  <hop.version>2.8.0</hop.version>
 		<license.licenseName>apache_v2</license.licenseName>	
 		<maven.compiler.source>11</maven.compiler.source>
 		<jacoco-maven-plugin.version>0.8.6</jacoco-maven-plugin.version>

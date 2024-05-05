@@ -32,7 +32,7 @@ OpenTelemetry Metrics and Logging are not yet correctly supported.
 
 ### System Requirements
 
-https://hop.apache.org[Apache Hop] 2.7 or above.
+https://hop.apache.org[Apache Hop] 2.9 or above.
 
 ### Manual Install
 

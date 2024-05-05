@@ -19,15 +19,16 @@ http://www.apache.org/licenses/LICENSE-2.0
 	<parent>
 		<groupId>org.apache.hop</groupId>
 		<artifactId>hop-opentelemetry</artifactId>
-		<version>2.9.0-SNAPSHOT</version>
+		<version>0.1.0-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>hop-opentelemetry-plugins</artifactId>
 	<name>Hop OpenTelemetry Plugins</name>
 	<description>Hop Plugins OpenTelemetry</description>
 	<url>http://hop.apache.org</url>
-
+	  
 	<properties>
+	  <hop.version>2.9.0-SNAPSHOT</hop.version>
 		<license.licenseName>apache_v2</license.licenseName>
 		<maven.compiler.source>11</maven.compiler.source>
 		<!-- Third-party Core dependencies -->
@@ -37,7 +38,7 @@ http://www.apache.org/licenses/LICENSE-2.0
 		<dependency>
 			<groupId>org.apache.hop</groupId>
 			<artifactId>hop-core</artifactId>
-			<version>${project.version}</version>
+			<version>${hop.version}</version>
 			<scope>compile</scope>
 		</dependency>
 
@@ -45,7 +46,7 @@ http://www.apache.org/licenses/LICENSE-2.0
 			<groupId>
 				org.apache.hop</groupId>
 			<artifactId>hop-engine</artifactId>
-			<version>${project.version}</version>
+			<version>${hop.version}</version>
 			<scope>
 				compile</scope>
 		</dependency>
@@ -53,7 +54,7 @@ http://www.apache.org/licenses/LICENSE-2.0
 		<dependency>
 			<groupId>org.apache.hop</groupId>
 			<artifactId>hop-ui</artifactId>
-			<version>${project.version}</version>
+			<version>${hop.version}</version>
 			<scope>compile</scope>
 		</dependency>
 
@@ -64,9 +65,21 @@ http://www.apache.org/licenses/LICENSE-2.0
 		</dependency>
 
 		<dependency>
+    	<groupId>io.opentelemetry</groupId>
+    	<artifactId>opentelemetry-sdk-extension-autoconfigure</artifactId>
+    	<version>1.37.0</version>
+	</dependency>
+
+		<dependency>
 			<groupId>io.opentelemetry.instrumentation</groupId>
 			<artifactId>opentelemetry-instrumentation-api</artifactId>
 			<version>2.3.0</version>
+		</dependency>
+		
+		<dependency>
+    	<groupId>io.opentelemetry.instrumentation</groupId>
+    	<artifactId>opentelemetry-instrumentation-api-semconv</artifactId>
+    	<version>1.33.2-alpha</version>
 		</dependency>
 
 		<dependency>
@@ -81,18 +94,17 @@ http://www.apache.org/licenses/LICENSE-2.0
 			<version>1.37.0</version>
 		</dependency>
 
-		<dependency>
-			<groupId>io.opentelemetry.semconv</groupId>
-			<artifactId>opentelemetry-semconv</artifactId>
-			<version>1.25.0-alpha</version>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>io.opentelemetry.semconv</groupId>-->
+<!--			<artifactId>opentelemetry-semconv</artifactId>-->
+<!--			<version>1.25.0-alpha</version>-->
+<!--		</dependency>-->
 
 		<dependency>
 			<groupId>io.opentelemetry.semconv</groupId>
 			<artifactId>opentelemetry-semconv-incubating</artifactId>
 			<version>1.25.0-alpha</version>
 		</dependency>
-
 
 	</dependencies>
 

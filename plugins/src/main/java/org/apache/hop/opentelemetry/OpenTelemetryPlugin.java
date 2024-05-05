@@ -19,7 +19,9 @@ package org.apache.hop.opentelemetry;
 
 import static java.time.temporal.ChronoUnit.SECONDS;
 
+import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.exporter.otlp.http.logs.OtlpHttpLogRecordExporter;
 import io.opentelemetry.exporter.otlp.http.metrics.OtlpHttpMetricExporter;
 import io.opentelemetry.exporter.otlp.http.trace.OtlpHttpSpanExporter;
@@ -125,6 +127,14 @@ public class OpenTelemetryPlugin {
       // Add hook to close SDK, which flushes logs, metrics and traces
       //
       Runtime.getRuntime().addShutdownHook(new Thread(telemetry::close));
+
+      LongCounter hopStartCount =
+          GlobalOpenTelemetry.getMeter("CLIENT")
+              .counterBuilder("hop.start.count")
+              .setDescription("The total number of times a hop runtime has been started.")
+              .build();
+
+      hopStartCount.add(1);
     } catch (Exception e) {
       log.logError("OpenTelemetry initialization error", e);
     }
@@ -197,7 +207,7 @@ public class OpenTelemetryPlugin {
       // Create an OTLP metric exporter via HTTP
       exporter =
           OtlpHttpMetricExporter.builder()
-              .setEndpoint(config.getEndpoint())
+              .setEndpoint(config.getEndpoint() + "/v1/metrics")
               .setTimeout(config.getTimeout())
               .setHeaders(config::getHeaders)
               .build();
@@ -206,6 +216,7 @@ public class OpenTelemetryPlugin {
     return SdkMeterProvider.builder()
         .setResource(getResource(config))
         .registerMetricReader(PeriodicMetricReader.builder(exporter).build())
+        // .registerMetricReader(PeriodicMetricReader.create(LoggingMetricExporter.create()))
         .build();
   }
 
@@ -225,7 +236,7 @@ public class OpenTelemetryPlugin {
       // Create an OTLP trace exporter via HTTP
       exporter =
           OtlpHttpSpanExporter.builder()
-              .setEndpoint(config.getEndpoint())
+              .setEndpoint(config.getEndpoint() + "/v1/traces")
               .setTimeout(config.getTimeout())
               .setHeaders(config::getHeaders)
               .build();
@@ -257,7 +268,7 @@ public class OpenTelemetryPlugin {
       // Create an OTLP log exporter via HTTP
       exporter =
           OtlpHttpLogRecordExporter.builder()
-              .setEndpoint(config.getEndpoint())
+              .setEndpoint(config.getEndpoint() + "/v1/logs")
               .setTimeout(config.getTimeout())
               .setHeaders(config::getHeaders)
               .build();

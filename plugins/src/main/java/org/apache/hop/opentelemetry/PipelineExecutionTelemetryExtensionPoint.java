@@ -128,7 +128,7 @@ public class PipelineExecutionTelemetryExtensionPoint extends ExecutionTelemetry
         engine -> {
           Result result = engine.getResult();
           pipelineSpan.setStatus(
-              result.getNrErrors() > 0 ? StatusCode.ERROR : StatusCode.OK,
+              pipeline.isStopped() || result.getNrErrors() > 0 ? StatusCode.ERROR : StatusCode.OK,
               pipeline.getStatusDescription());
 
           if (engine.getExecutionEndDate() != null) {
@@ -200,6 +200,6 @@ public class PipelineExecutionTelemetryExtensionPoint extends ExecutionTelemetry
         });
 
     // Add event if pipeline is stopped
-    pipeline.addExecutionStoppedListener(engine -> pipelineSpan.addEvent("Stopped"));
+    pipeline.addExecutionStoppedListener(engine -> pipelineSpan.addEvent("Stop pipeline"));
   }
 }

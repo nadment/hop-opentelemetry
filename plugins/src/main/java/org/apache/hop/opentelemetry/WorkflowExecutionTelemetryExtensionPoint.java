@@ -111,15 +111,14 @@ public class WorkflowExecutionTelemetryExtensionPoint extends ExecutionTelemetry
 
     workflow.getExtensionDataMap().put(SPAN, workflowSpan);
 
-    // TODO: workflow.addExecutionFinishedListener(
-    workflow.addWorkflowFinishedListener(
+    workflow.addExecutionFinishedListener(
         engine -> {
 
           // Update trace
           Result result = engine.getResult();
 
           workflowSpan.setStatus(
-              result.getNrErrors() > 0 ? StatusCode.ERROR : StatusCode.OK,
+              workflow.isStopped() || result.getNrErrors() > 0 ? StatusCode.ERROR : StatusCode.OK,
               workflow.getStatusDescription());
 
           if (engine.getExecutionEndDate() != null) {
@@ -152,7 +151,7 @@ public class WorkflowExecutionTelemetryExtensionPoint extends ExecutionTelemetry
         });
 
     // Add event if workflow is stopped
-    // workflow.addExecutionStoppedListener(engine -> workflowSpan.addEvent("Stopped"));
+    workflow.addExecutionStoppedListener(engine -> workflowSpan.addEvent("Stop workflow"));
 
     // Also trace every workflow action execution results.
     workflow.addActionListener(

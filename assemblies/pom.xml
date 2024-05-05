@@ -14,16 +14,15 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<artifactId>hop-opentelemetry</artifactId>
 		<groupId>org.apache.hop</groupId>
-  	<version>2.9.0-SNAPSHOT</version>
+		<artifactId>hop-opentelemetry</artifactId>
+		<version>0.1.0-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>hop-opentelemetry-assemblies</artifactId>
-	<packaging>pom</packaging>
-
 	<name>Hop OpenTelemetry Assemblies</name>
 	<description></description>
+	<packaging>pom</packaging>
 
 	<properties>
 		<license.licenseName>apache_v2</license.licenseName>
