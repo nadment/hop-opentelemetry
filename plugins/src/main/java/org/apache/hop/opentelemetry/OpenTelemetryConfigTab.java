@@ -38,6 +38,7 @@ import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.TableItem;
@@ -53,6 +54,7 @@ public class OpenTelemetryConfigTab {
 
   private Text wServiceName;
   private Text wEndpoint;
+  private Combo wProtocol;
   private TableView wHeaders;
 
   @GuiTab(
@@ -89,17 +91,17 @@ public class OpenTelemetryConfigTab {
         BaseMessages.getString(PKG, "OpenTelemetryConfig.ServiceName.Tooltip"));
     PropsUi.setLook(wlServiceName);
     FormData fdlServiceName = new FormData();
+    fdlServiceName.top = new FormAttachment(0, margin);
     fdlServiceName.left = new FormAttachment(0, 0);
     fdlServiceName.right = new FormAttachment(middle, -margin);
-    fdlServiceName.top = new FormAttachment(0, margin);
     wlServiceName.setLayoutData(fdlServiceName);
 
     wServiceName = new Text(wComposite, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
     PropsUi.setLook(wServiceName);
     FormData fdServiceName = new FormData();
+    fdServiceName.top = new FormAttachment(wlServiceName, 0, SWT.CENTER);
     fdServiceName.left = new FormAttachment(middle, 0);
     fdServiceName.right = new FormAttachment(100, 0);
-    fdServiceName.top = new FormAttachment(wlServiceName, 0, SWT.CENTER);
     wServiceName.setLayoutData(fdServiceName);
 
     // Endpoint
@@ -109,18 +111,39 @@ public class OpenTelemetryConfigTab {
     wlEndpoint.setToolTipText(BaseMessages.getString(PKG, "OpenTelemetryConfig.Endpoint.Tooltip"));
     PropsUi.setLook(wlEndpoint);
     FormData fdlEndpoint = new FormData();
+    fdlEndpoint.top = new FormAttachment(wServiceName, margin);
     fdlEndpoint.left = new FormAttachment(0, 0);
     fdlEndpoint.right = new FormAttachment(middle, -margin);
-    fdlEndpoint.top = new FormAttachment(wServiceName, margin);
     wlEndpoint.setLayoutData(fdlEndpoint);
 
     wEndpoint = new Text(wComposite, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
     PropsUi.setLook(wEndpoint);
     FormData fdEndpoint = new FormData();
+    fdEndpoint.top = new FormAttachment(wlEndpoint, 0, SWT.CENTER);
     fdEndpoint.left = new FormAttachment(middle, 0);
     fdEndpoint.right = new FormAttachment(100, 0);
-    fdEndpoint.top = new FormAttachment(wlEndpoint, 0, SWT.CENTER);
     wEndpoint.setLayoutData(fdEndpoint);
+
+    // Protocol
+    //
+    Label wlProtocol = new Label(wComposite, SWT.RIGHT);
+    wlProtocol.setText(BaseMessages.getString(PKG, "OpenTelemetryConfig.Protocol.Label"));
+    wlProtocol.setToolTipText(BaseMessages.getString(PKG, "OpenTelemetryConfig.Protocol.Tooltip"));
+    PropsUi.setLook(wlProtocol);
+    FormData fdlProtocol = new FormData();
+    fdlProtocol.top = new FormAttachment(wEndpoint, margin);
+    fdlProtocol.left = new FormAttachment(0, 0);
+    fdlProtocol.right = new FormAttachment(middle, -margin);
+    wlProtocol.setLayoutData(fdlProtocol);
+
+    wProtocol = new Combo(wComposite, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+    wProtocol.setItems("gRPC", "http/protobuf");
+    PropsUi.setLook(wProtocol);
+    FormData fdConnectionType = new FormData();
+    fdConnectionType.top = new FormAttachment(wlProtocol, 0, SWT.CENTER);
+    fdConnectionType.left = new FormAttachment(middle, 0);
+    fdConnectionType.right = new FormAttachment(100, 0);
+    wProtocol.setLayoutData(fdConnectionType);
 
     // Headers
     //
@@ -129,9 +152,9 @@ public class OpenTelemetryConfigTab {
     wlHeaders.setToolTipText(BaseMessages.getString(PKG, "OpenTelemetryConfig.Headers.Tooltip"));
     PropsUi.setLook(wlHeaders);
     FormData fdlHeaders = new FormData();
+    fdlHeaders.top = new FormAttachment(wProtocol, margin);
     fdlHeaders.left = new FormAttachment(0, 0);
     fdlHeaders.right = new FormAttachment(middle, -margin);
-    fdlHeaders.top = new FormAttachment(wEndpoint, margin);
     wlHeaders.setLayoutData(fdlHeaders);
 
     ColumnInfo[] columns = {
@@ -170,6 +193,7 @@ public class OpenTelemetryConfigTab {
     // Add listener after load, because save is called on each setText() and we lose headers
     wServiceName.addListener(SWT.Modify, e -> save());
     wEndpoint.addListener(SWT.Modify, e -> save());
+    wProtocol.addListener(SWT.Modify, e -> save());
 
     tabItem.setControl(wComposite);
   }
@@ -188,6 +212,7 @@ public class OpenTelemetryConfigTab {
 
     wServiceName.setText(Const.NVL(config.getServiceName(), ""));
     wEndpoint.setText(Const.NVL(config.getEndpoint(), ""));
+    wProtocol.setText(Const.NVL(config.getProtocol(), ""));
   }
 
   private void save() {
@@ -196,6 +221,7 @@ public class OpenTelemetryConfigTab {
       OpenTelemetryConfig config = new OpenTelemetryConfig();
       config.setServiceName(wServiceName.getText());
       config.setEndpoint(wEndpoint.getText());
+      config.setProtocol(wProtocol.getText());
 
       Map<String, String> headers = new HashMap<>();
       for (int i = 0; i < wHeaders.nrNonEmpty(); i++) {

@@ -188,7 +188,7 @@ public class OpenTelemetryPlugin {
     HopConfig.getInstance().saveOption(OTEL_EXPORTER_OTLP_PROTOCOL, config.getProtocol());
     HopConfig.getInstance().saveOption(OTEL_EXPORTER_OTLP_HEADERS, config.getHeadersAsSrtring());
     HopConfig.getInstance()
-        .saveOption(OTEL_EXPORTER_OTLP_TIMEOUT, String.valueOf(config.getTimeout()));
+        .saveOption(OTEL_EXPORTER_OTLP_TIMEOUT, String.valueOf(config.getTimeout().getSeconds()));
   }
 
   /** Initialize meter provider */
