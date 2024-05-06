@@ -34,7 +34,9 @@ import org.apache.hop.core.Result;
 import org.apache.hop.core.exception.HopException;
 import org.apache.hop.core.extension.ExtensionPoint;
 import org.apache.hop.core.extension.IExtensionPoint;
+import org.apache.hop.core.logging.HopLogStore;
 import org.apache.hop.core.logging.ILogChannel;
+import org.apache.hop.core.logging.LoggingBuffer;
 import org.apache.hop.core.variables.IVariables;
 import org.apache.hop.execution.ExecutionType;
 import org.apache.hop.pipeline.PipelineMeta;
@@ -181,17 +183,23 @@ public class PipelineExecutionTelemetryExtensionPoint extends ExecutionTelemetry
               Attributes.builder().put(HopAttributes.PIPELINE_ENGINE, pipelinePlugin.id()).build());
 
           // Logs pipeline result
-          if (result.getLogText() != null) {
+          if (true) { // result.getLogText() != null) {
 
             // Acquiring a logger
             Logger logger =
                 GlobalOpenTelemetry.get().getLogsBridge().get(INSTRUMENTATION_PIPELINE_SCOPE);
 
+            // Capture the logging text after the execution...
+            //
+            LoggingBuffer loggingBuffer = HopLogStore.getAppender();
+            StringBuffer logTextBuffer = loggingBuffer.getBuffer(log.getLogChannelId(), false);
+
             logger
                 .logRecordBuilder()
                 .setContext(context)
                 .setSeverity(Severity.INFO)
-                .setBody(result.getLogText())
+                // .setBody(result.getLogText())
+                .setBody(logTextBuffer.toString())
                 // .setAttribute(COMPONENT_KEY, ExecutionType.Pipeline.name())
                 .setAttribute(HopAttributes.PIPELINE_CONTAINER_ID, engine.getContainerId())
                 .setAttribute(HopAttributes.PIPELINE_EXECUTION_ID, engine.getLogChannelId())

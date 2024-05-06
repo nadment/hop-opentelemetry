@@ -108,7 +108,7 @@ public class OpenTelemetryPlugin {
       OpenTelemetryConfig config = loadConfig();
 
       log.logBasic(
-          "OpenTelemetry initialization service '"
+          "OpenTelemetry for service '"
               + config.getServiceName()
               + "' with transport protocol "
               + config.getProtocol()
