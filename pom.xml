@@ -11,103 +11,101 @@ http://www.apache.org/licenses/LICENSE-2.0
 	WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. ~ See the 
 	License for the specific language governing permissions and ~ limitations 
 	under the License. ~ -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>org.apache.hop</groupId>
-		<artifactId>hop</artifactId>
-    <version>2.10.0-SNAPSHOT</version>
-	</parent>
-	
-	<artifactId>hop-opentelemetry</artifactId>
-	<packaging>pom</packaging>
-	<name>Hop OpenTelemetry</name>
-	<version>0.1.0-SNAPSHOT</version>
-	
-	<properties>
-	  <hop.version>2.10.0-SNAPSHOT</hop.version>
-		<license.licenseName>apache_v2</license.licenseName>	
-		<maven.compiler.source>11</maven.compiler.source>
-		<jacoco-maven-plugin.version>0.8.6</jacoco-maven-plugin.version>
-		<sonar.projectKey>${project.artifactId}</sonar.projectKey>
-		<sonar.organization>nadment</sonar.organization>
-		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
-		<sonar.coverage.jacoco.xmlReportPaths>${basedir}/${aggregate.report.dir}</sonar.coverage.jacoco.xmlReportPaths>		
-	</properties>
+    <parent>
+        <groupId>org.apache.hop</groupId>
+        <artifactId>hop</artifactId>
+        <version>2.10.0-SNAPSHOT</version>
+    </parent>
 
-	<modules>
-		<module>plugins</module>
-		<module>assemblies</module>
-	</modules>
+    <artifactId>hop-opentelemetry</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>Hop OpenTelemetry</name>
 
-	<build>
+    <modules>
+        <module>assemblies</module>
+        <module>plugins</module>
+    </modules>
 
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>org.jacoco</groupId>
-					<artifactId>jacoco-maven-plugin</artifactId>
-					<executions>
-						<execution>
-							<id>report</id>
-							<goals>
-								<goal>report-aggregate</goal>
-							</goals>
-							<phase>test</phase>
-						</execution>
-					</executions>
-				</plugin>
+    <properties>
+        <hop.version>2.10.0-SNAPSHOT</hop.version>
+        <jacoco-maven-plugin.version>0.8.6</jacoco-maven-plugin.version>
+        <license.licenseName>apache_v2</license.licenseName>
+        <maven.compiler.source>17</maven.compiler.source>
+        <sonar.coverage.jacoco.xmlReportPaths>${basedir}/${aggregate.report.dir}</sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.organization>nadment</sonar.organization>
+        <sonar.projectKey>${project.artifactId}</sonar.projectKey>
+    </properties>
 
-				<plugin>
-					<groupId>org.sonarsource.scanner.maven</groupId>
-					<artifactId>sonar-maven-plugin</artifactId>
-					<version>4.0.0.4121</version>
-				</plugin>
-			</plugins>
-		</pluginManagement>
+    <repositories>
+        <repository>
+            <id>snapshots.apache.org</id>
+            <url>https://repository.apache.org/snapshots</url>
+        </repository>
+        <repository>
+            <id>maven.org</id>
+            <url>https://repo1.maven.org/maven2</url>
+        </repository>
+    </repositories>
 
-		<plugins>
-			<plugin>
-				<groupId>org.apache.rat</groupId>
-				<artifactId>apache-rat-plugin</artifactId>
-				<configuration>
-					<excludeSubProjects>false</excludeSubProjects>
-					<consoleOutput>true</consoleOutput>
-					<excludes>
-						<exclude>**/target/**</exclude>
-						<exclude>**/*.classpath</exclude>
-						<exclude>**/*.project</exclude>
-						<exclude>**/*.svg</exclude>
-						<exclude>**/*.prefs</exclude>
-						<exclude>**/*.hpl</exclude>
-						<exclude>**/*.hwf</exclude>
-						<exclude>**/*.yml</exclude>
-					</excludes>
-				</configuration>
-				<executions>
-					<execution>
-						<phase>verify</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+    <build>
 
-		</plugins>
-	</build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>report</id>
+                            <goals>
+                                <goal>report-aggregate</goal>
+                            </goals>
+                            <phase>test</phase>
+                        </execution>
+                    </executions>
+                </plugin>
 
-	<repositories>
-		<repository>
-			<id>snapshots.apache.org</id>
-			<url>https://repository.apache.org/snapshots</url>
-		</repository>
-		<repository>
-			<id>maven.org</id>
-			<url>https://repo1.maven.org/maven2</url>
-		</repository>		
-	</repositories>
+                <plugin>
+                    <groupId>org.sonarsource.scanner.maven</groupId>
+                    <artifactId>sonar-maven-plugin</artifactId>
+                    <version>4.0.0.4121</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
+                <configuration>
+                    <excludeSubProjects>false</excludeSubProjects>
+                    <consoleOutput>true</consoleOutput>
+                    <excludes>
+                        <exclude>**/target/**</exclude>
+                        <exclude>**/*.classpath</exclude>
+                        <exclude>**/*.project</exclude>
+                        <exclude>**/*.svg</exclude>
+                        <exclude>**/*.prefs</exclude>
+                        <exclude>**/*.hpl</exclude>
+                        <exclude>**/*.hwf</exclude>
+                        <exclude>**/*.yml</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <phase>verify</phase>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
 </project>

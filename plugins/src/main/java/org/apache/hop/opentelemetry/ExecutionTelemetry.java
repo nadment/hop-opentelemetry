@@ -40,12 +40,11 @@ public class ExecutionTelemetry {
     Span span = null;
 
     // Workflow or pipeline
-    if (parent instanceof IExtensionData) {
-      span = (Span) ((IExtensionData) parent).getExtensionDataMap().get(SPAN);
+    if (parent instanceof IExtensionData extension) {
+      span = (Span) extension.getExtensionDataMap().get(SPAN);
     }
 
-    if (span == null && parent instanceof ITransform) {
-      ITransform transform = (ITransform) parent;
+    if (span == null && parent instanceof ITransform transform) {
       span = (Span) transform.getPipeline().getExtensionDataMap().get(SPAN);
     }
 
