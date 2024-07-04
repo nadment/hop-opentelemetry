@@ -39,7 +39,7 @@
 		<dependencySet>
 			<useProjectArtifact>false</useProjectArtifact>
 			<includes>
-				<include>org.apache.hop:hop-opentelemetry-plugins:jar</include>
+				<include>org.apache.hop:hop-opentelemetry:jar</include>
 			</includes>
 		</dependencySet>
 		<dependencySet>
