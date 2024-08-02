@@ -67,7 +67,7 @@ http://www.apache.org/licenses/LICENSE-2.0
         <dependency>
             <groupId>io.opentelemetry.instrumentation</groupId>
             <artifactId>opentelemetry-instrumentation-api-semconv</artifactId>
-            <version>1.33.4-alpha</version>
+            <version>1.33.5-alpha</version>
         </dependency>
         <dependency>
             <groupId>io.opentelemetry.semconv</groupId>
