@@ -78,23 +78,20 @@ http://www.apache.org/licenses/LICENSE-2.0
             <groupId>org.apache.hop</groupId>
             <artifactId>hop-core</artifactId>
             <version>${hop.version}</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.apache.hop</groupId>
             <artifactId>hop-engine</artifactId>
             <version>${hop.version}</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.apache.hop</groupId>
             <artifactId>hop-ui</artifactId>
             <version>${hop.version}</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
-
     </dependencies>
 
     <repositories>
